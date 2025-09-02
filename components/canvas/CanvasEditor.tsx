@@ -307,14 +307,28 @@ export default function CanvasEditor({ className }: CanvasEditorProps) {
     <div 
       ref={containerRef}
       className={cn(
-        "relative bg-neutral-100 rounded-xl p-4",
+        "relative h-full",
         "flex items-center justify-center",
-        "min-h-[650px]",
+        "bg-white",
         className
       )}
     >
+      {/* Canvas Size Badge */}
+      <div className="absolute top-4 left-4 z-10">
+        <div className="px-4 py-2 bg-gradient-to-r from-yellow-400/90 to-orange-400/90 backdrop-blur-sm rounded-full shadow-lg border border-yellow-300/50">
+          <span className="text-xs font-semibold text-white">
+            {canvasWidth} × {canvasHeight}
+          </span>
+          {canvasScale < 1 && (
+            <span className="text-xs text-yellow-100 ml-1">
+              ({Math.round(canvasScale * 100)}%)
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Main Canvas Container */}
       <div className="relative">
-        {/* Canvas */}
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
@@ -322,7 +336,7 @@ export default function CanvasEditor({ className }: CanvasEditorProps) {
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
           className={cn(
-            "border-2 border-neutral-300 rounded-lg shadow-lg bg-white",
+            "rounded-xl shadow-xl bg-white border border-neutral-200",
             currentTool === 'brush' && "cursor-crosshair",
             currentTool === 'eraser' && "cursor-crosshair"
           )}
@@ -332,15 +346,13 @@ export default function CanvasEditor({ className }: CanvasEditorProps) {
           }}
         />
         
-        {/* Canvas info */}
-        <div className="absolute -top-8 left-0 text-xs text-neutral-500">
-          {canvasWidth} × {canvasHeight} {canvasScale < 1 && `(${Math.round(canvasScale * 100)}%)`}
-        </div>
-        
-        {/* Canvas overlay for additional UI */}
+        {/* Drawing Status */}
         {isDrawing && (
-          <div className="absolute top-2 left-2 px-3 py-1 bg-black/50 text-white text-sm rounded-full">
-            {currentTool === 'eraser' ? '擦除中...' : '绘制中...'}
+          <div className="absolute top-4 right-4 px-4 py-2 bg-gradient-to-r from-yellow-500/90 to-orange-500/90 backdrop-blur-sm text-white text-sm rounded-full shadow-lg animate-pulse">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+              <span className="font-medium">{currentTool === 'eraser' ? '擦除中' : '绘制中'}</span>
+            </div>
           </div>
         )}
         
@@ -348,25 +360,13 @@ export default function CanvasEditor({ className }: CanvasEditorProps) {
         {isGenerating && <PeelingBananaLoader />}
       </div>
 
-      {/* Quick Actions */}
-      <div className="absolute top-4 right-4 flex gap-2">
-        <button
-          onClick={clearCanvas}
-          className="px-3 py-1.5 bg-white border border-neutral-300 rounded-lg text-sm hover:bg-neutral-50 transition-colors"
-        >
-          清空画布
-        </button>
-        <button
-          onClick={exportCanvas}
-          className="px-3 py-1.5 bg-banana-400 text-white rounded-lg text-sm hover:bg-banana-500 transition-colors"
-        >
-          导出图片
-        </button>
-      </div>
-      
-      {/* Keyboard shortcuts hint */}
-      <div className="absolute bottom-4 right-4 text-xs text-neutral-400">
-        撤销: Cmd/Ctrl+Z | 重做: Cmd/Ctrl+Shift+Z
+      {/* Keyboard Shortcuts Hint */}
+      <div className="absolute bottom-4 left-4">
+        <div className="px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-yellow-100/50 shadow-sm">
+          <span className="text-xs text-neutral-600 font-medium">
+            ⌘/Ctrl+Z 撤销 · ⌘/Ctrl+Shift+Z 重做
+          </span>
+        </div>
       </div>
     </div>
   )

@@ -104,37 +104,51 @@ export default function Home() {
   } = useAppStore()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-banana-50 via-white to-banana-50">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-orange-50 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-yellow-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl" />
+      </div>
+      
       <Header />
       
-      <main className="container mx-auto px-4 py-6">
-        {/* Three Column Layout */}
-        <div className="grid grid-cols-12 gap-6 mb-8">
-          {/* Left Column - Drawing Tools */}
-          <div className="col-span-2 space-y-4">
+      <main className="flex h-[calc(100vh-64px)]">
+        {/* Left Sidebar - Tools */}
+        <aside className="w-24 bg-white/80 backdrop-blur-md border-r border-yellow-200/50 shadow-lg relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-yellow-50/50 to-orange-50/50 pointer-events-none" />
+          <div className="flex flex-col items-center py-6 relative z-10">
             <DrawingToolbar />
           </div>
+        </aside>
 
-          {/* Middle Column - Canvas */}
-          <div className="col-span-7 space-y-4">
-            {/* Canvas Editor */}
-            <CanvasEditor className="min-h-[600px]" />
+        {/* Main Content Area */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Canvas Section */}
+          <div className="flex-1 p-8 overflow-auto">
+            <div className="h-full min-h-[600px]">
+              <div className="h-full bg-white rounded-2xl shadow-lg overflow-hidden border border-neutral-200">
+                <CanvasEditor className="h-full" />
+              </div>
+            </div>
           </div>
 
-          {/* Right Column - Image Gallery and Results */}
-          <div className="col-span-3 space-y-4">
-            <ImageGallery />
-            
-            {/* Generated Result */}
-            <GeneratedResult />
-          </div>
-        </div>
-
-        {/* Bottom Section - Prompt Editor */}
-        <div className="space-y-6">
-          {/* Prompt Editor */}
-          <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
-            <PromptEditor />
+          {/* Right Panel - Upload & Generate */}
+          <div className="w-96 p-8 pl-0 overflow-y-auto">
+            <div className="space-y-6">
+              {/* Image Upload Card */}
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-yellow-100/50 hover:shadow-2xl transition-all duration-300">
+                <ImageGallery />
+              </div>
+              
+              {/* Prompt Input Card */}
+              <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-yellow-100/50 hover:shadow-2xl transition-all duration-300">
+                <PromptEditor />
+              </div>
+              
+              {/* Generated Result */}
+              <GeneratedResult />
+            </div>
           </div>
         </div>
       </main>

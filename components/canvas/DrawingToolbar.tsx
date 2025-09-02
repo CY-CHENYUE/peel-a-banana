@@ -6,22 +6,24 @@ import {
   Eraser,
   Undo2,
   Redo2,
-  Palette,
   Square,
   Smartphone,
   Monitor,
   Tablet,
   RectangleHorizontal,
-  Settings
+  Trash2,
+  Download,
+  Palette
 } from 'lucide-react'
 import { ChromePicker } from 'react-color'
 import useAppStore from '@/stores/useAppStore'
 import { cn } from '@/lib/utils'
 import { DrawingTool, AspectRatio } from '@/types'
+import Portal from '@/components/ui/Portal'
 
 export default function DrawingToolbar() {
   const {
-    canvas: { currentTool, brushSize, eraserSize, currentColor, aspectRatio, canvasWidth, canvasHeight, history, historyIndex },
+    canvas: { currentTool, brushSize, eraserSize, currentColor, aspectRatio, history, historyIndex },
     setCanvasTool,
     setBrushSize,
     setEraserSize,
@@ -33,15 +35,120 @@ export default function DrawingToolbar() {
     redoCanvas
   } = useAppStore()
   
+  const [showBrushSize, setShowBrushSize] = useState(false)
+  const [showEraserSize, setShowEraserSize] = useState(false)
   const [showColorPicker, setShowColorPicker] = useState(false)
+  const [showRatios, setShowRatios] = useState(false)
 
   const tools: Array<{
     id: DrawingTool
     icon: React.ElementType
     label: string
+    onClick?: () => void
   }> = [
-    { id: 'brush', icon: Paintbrush, label: '画笔' },
-    { id: 'eraser', icon: Eraser, label: '橡皮擦' }
+    { 
+      id: 'brush', 
+      icon: Paintbrush, 
+      label: '画笔',
+      onClick: () => {
+        setCanvasTool('brush')
+        setShowBrushSize(!showBrushSize)
+        setShowEraserSize(false)
+      }
+    },
+    { 
+      id: 'eraser', 
+      icon: Eraser, 
+      label: '橡皮擦',
+      onClick: () => {
+        setCanvasTool('eraser')
+        setShowEraserSize(!showEraserSize)
+        setShowBrushSize(false)
+      }
+    },
+  ]
+
+  const actionTools = [
+    { 
+      id: 'undo', 
+      icon: Undo2, 
+      label: '撤销',
+      onClick: () => {
+        if (canUndo()) {
+          const newIndex = historyIndex - 1
+          undoCanvas()
+          const canvas = document.querySelector('canvas') as HTMLCanvasElement
+          const context = canvas?.getContext('2d')
+          if (canvas && context && history[newIndex]) {
+            const img = new Image()
+            img.onload = () => {
+              context.clearRect(0, 0, canvas.width, canvas.height)
+              context.fillStyle = '#ffffff'
+              context.fillRect(0, 0, canvas.width, canvas.height)
+              context.drawImage(img, 0, 0)
+            }
+            img.src = history[newIndex]
+          }
+        }
+      },
+      disabled: !canUndo()
+    },
+    { 
+      id: 'redo', 
+      icon: Redo2, 
+      label: '重做',
+      onClick: () => {
+        if (canRedo()) {
+          const newIndex = historyIndex + 1
+          redoCanvas()
+          const canvas = document.querySelector('canvas') as HTMLCanvasElement
+          const context = canvas?.getContext('2d')
+          if (canvas && context && history[newIndex]) {
+            const img = new Image()
+            img.onload = () => {
+              context.clearRect(0, 0, canvas.width, canvas.height)
+              context.fillStyle = '#ffffff'
+              context.fillRect(0, 0, canvas.width, canvas.height)
+              context.drawImage(img, 0, 0)
+            }
+            img.src = history[newIndex]
+          }
+        }
+      },
+      disabled: !canRedo()
+    }
+  ]
+
+  const canvasActions = [
+    { 
+      id: 'clear', 
+      icon: Trash2, 
+      label: '清空',
+      onClick: () => {
+        const canvas = document.querySelector('canvas') as HTMLCanvasElement
+        const context = canvas?.getContext('2d')
+        if (canvas && context) {
+          context.clearRect(0, 0, canvas.width, canvas.height)
+          context.fillStyle = '#ffffff'
+          context.fillRect(0, 0, canvas.width, canvas.height)
+        }
+      }
+    },
+    { 
+      id: 'export', 
+      icon: Download, 
+      label: '导出',
+      onClick: () => {
+        const canvas = document.querySelector('canvas') as HTMLCanvasElement
+        if (canvas) {
+          const dataURL = canvas.toDataURL('image/png')
+          const link = document.createElement('a')
+          link.download = 'peel-a-banana-canvas.png'
+          link.href = dataURL
+          link.click()
+        }
+      }
+    }
   ]
 
   const ratioOptions: Array<{
@@ -56,248 +163,243 @@ export default function DrawingToolbar() {
     { id: '16:9', label: '16:9', icon: Monitor }
   ]
 
+  const quickColors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF']
+
   return (
-    <div className="flex flex-col gap-4 p-4 bg-white rounded-xl border border-neutral-200 shadow-sm">
-      {/* Tool Selection */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium text-neutral-700">工具</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {tools.map(({ id, icon: Icon, label }) => (
+    <div className="flex flex-col items-center gap-4 px-2 relative z-50">
+      {/* Drawing Tools */}
+      <div className="space-y-1">
+        {tools.map(({ id, icon: Icon, label, onClick }) => (
+          <div key={id} className="relative">
             <button
-              key={id}
-              onClick={() => setCanvasTool(id)}
+              onClick={onClick}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg transition-all",
-                "border text-sm font-medium",
-                currentTool === id ? [
-                  "bg-banana-400 border-banana-500 text-white",
-                  "shadow-md"
-                ] : [
-                  "bg-white border-neutral-300 text-neutral-700",
-                  "hover:bg-neutral-50 hover:border-neutral-400"
-                ]
+                "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200",
+                "border-2 bg-white hover:bg-gradient-to-br hover:from-yellow-50 hover:to-orange-50 group",
+                "text-neutral-600 hover:text-neutral-800 shadow-sm hover:shadow-md",
+                currentTool === id ? 
+                  "bg-gradient-to-br from-yellow-400 to-orange-400 text-white border-yellow-400 shadow-lg scale-105" :
+                  "border-yellow-200/50"
               )}
+              title={label}
             >
-              <Icon className="w-4 h-4" />
-              <span>{label}</span>
+              <Icon className="w-5 h-5" />
             </button>
-          ))}
-        </div>
+            
+            {/* Brush Size Popup */}
+            {id === 'brush' && showBrushSize && currentTool === 'brush' && (
+              <Portal>
+                <div 
+                  className="fixed inset-0 z-[9998]" 
+                  onClick={() => setShowBrushSize(false)}
+                />
+                <div className="fixed z-[9999] w-48" style={{ left: '6rem', top: '100px' }}>
+                  <div className="bg-white rounded-lg shadow-xl p-3 border border-neutral-200">
+                    <div className="text-xs font-medium mb-2">画笔大小</div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="50"
+                      value={brushSize}
+                      onChange={(e) => setBrushSize(Number(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="text-xs text-center mt-1">{brushSize}px</div>
+                  </div>
+                </div>
+              </Portal>
+            )}
+            
+            {/* Eraser Size Popup */}
+            {id === 'eraser' && showEraserSize && currentTool === 'eraser' && (
+              <Portal>
+                <div 
+                  className="fixed inset-0 z-[9998]" 
+                  onClick={() => setShowEraserSize(false)}
+                />
+                <div className="fixed z-[9999] w-48" style={{ left: '6rem', top: '160px' }}>
+                  <div className="bg-white rounded-lg shadow-xl p-3 border border-neutral-200">
+                    <div className="text-xs font-medium mb-2">橡皮擦大小</div>
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      value={eraserSize}
+                      onChange={(e) => setEraserSize(Number(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="text-xs text-center mt-1">{eraserSize}px</div>
+                  </div>
+                </div>
+              </Portal>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* Brush Size (only show for brush tool) */}
-      {currentTool === 'brush' && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-neutral-700">画笔大小</h3>
-          <div className="flex items-center gap-3">
-            <input
-              type="range"
-              min="1"
-              max="50"
-              value={brushSize}
-              onChange={(e) => setBrushSize(Number(e.target.value))}
-              className="flex-1"
-            />
-            <span className="text-sm text-neutral-600 w-8">{brushSize}</span>
-          </div>
-          <div className="flex justify-between text-xs text-neutral-500">
-            <span>细</span>
-            <span>粗</span>
-          </div>
-        </div>
-      )}
+      {/* Divider */}
+      <div className="w-12 h-px bg-gradient-to-r from-transparent via-yellow-300 to-transparent" />
 
-      {/* Eraser Size (only show for eraser tool) */}
-      {currentTool === 'eraser' && (
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-neutral-700">橡皮擦大小</h3>
-          <div className="flex items-center gap-3">
-            <input
-              type="range"
-              min="5"
-              max="100"
-              value={eraserSize}
-              onChange={(e) => setEraserSize(Number(e.target.value))}
-              className="flex-1"
-            />
-            <span className="text-sm text-neutral-600 w-8">{eraserSize}</span>
+      {/* History Actions */}
+      <div className="space-y-1">
+        {actionTools.map(({ id, icon: Icon, label, onClick, disabled }) => (
+          <div key={id} className="relative">
+            <button
+              onClick={onClick}
+              disabled={disabled}
+              className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 group",
+                "border-2 border-yellow-200/50 bg-white text-neutral-600 shadow-sm",
+                disabled ? "opacity-30 cursor-not-allowed" : "hover:bg-gradient-to-br hover:from-yellow-50 hover:to-orange-50 hover:shadow-md hover:text-neutral-800"
+              )}
+              title={label}
+            >
+              <Icon className="w-5 h-5" />
+            </button>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div className="w-12 h-px bg-gradient-to-r from-transparent via-yellow-300 to-transparent" />
 
       {/* Color Picker */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium text-neutral-700">颜色</h3>
-        <div className="relative">
-          <button
-            onClick={() => setShowColorPicker(!showColorPicker)}
-            className="w-full h-12 rounded-lg border-2 border-neutral-300 flex items-center gap-3 px-3 hover:border-neutral-400 transition-colors"
-          >
+      <div className="relative">
+        <button
+          onClick={() => setShowColorPicker(!showColorPicker)}
+          className="w-12 h-12 rounded-xl border-2 border-yellow-200/50 cursor-pointer hover:border-yellow-300 transition-all duration-200 group shadow-md hover:shadow-lg hover:scale-105"
+          style={{ backgroundColor: currentColor }}
+          title="选择颜色"
+        />
+        
+        {/* Color Picker Popup */}
+        {showColorPicker && (
+          <Portal>
             <div 
-              className="w-8 h-8 rounded-md border border-neutral-300"
-              style={{ backgroundColor: currentColor }}
+              className="fixed inset-0 z-[9998]" 
+              onClick={() => setShowColorPicker(false)}
             />
-            <span className="text-sm text-neutral-600">{currentColor}</span>
-            <Palette className="w-4 h-4 ml-auto text-neutral-500" />
-          </button>
-          
-          {showColorPicker && (
-            <div className="absolute top-full mt-2 z-50">
-              <div 
-                className="fixed inset-0" 
-                onClick={() => setShowColorPicker(false)}
-              />
-              <ChromePicker
-                color={currentColor}
-                onChange={(color) => setCanvasColor(color.hex)}
-                disableAlpha
-              />
+            <div className="fixed z-[9999] w-64" style={{ left: '6rem', top: '50%', transform: 'translateY(-50%)' }}>
+              <div className="bg-white rounded-lg shadow-xl p-4 border border-neutral-200">
+                <div className="text-sm font-medium mb-3">选择颜色</div>
+                
+                {/* Quick Colors */}
+                <div className="mb-4">
+                  <div className="text-xs text-neutral-500 mb-2">快速选择</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {quickColors.map(color => (
+                      <button
+                        key={color}
+                        onClick={() => {
+                          setCanvasColor(color)
+                          setShowColorPicker(false)
+                        }}
+                        className={cn(
+                          "w-10 h-10 rounded-lg border-2 transition-all hover:scale-110",
+                          currentColor === color ? "border-yellow-400 shadow-md" : "border-neutral-300"
+                        )}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Color Picker */}
+                <div className="border-t pt-3">
+                  <ChromePicker
+                    color={currentColor}
+                    onChange={(color) => setCanvasColor(color.hex)}
+                    disableAlpha
+                    width="200px"
+                  />
+                </div>
+                
+                {/* Current Color Display */}
+                <div className="mt-3 flex items-center justify-between text-xs">
+                  <span className="text-neutral-500">当前颜色</span>
+                  <span className="font-mono text-neutral-700">{currentColor}</span>
+                </div>
+              </div>
             </div>
+          </Portal>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="w-12 h-px bg-gradient-to-r from-transparent via-yellow-300 to-transparent" />
+
+      {/* Aspect Ratio Button */}
+      <div className="relative">
+        <button
+          onClick={() => setShowRatios(!showRatios)}
+          className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 group",
+            "border-2 border-yellow-200/50 bg-white hover:bg-gradient-to-br hover:from-yellow-50 hover:to-orange-50 text-neutral-600 shadow-sm hover:shadow-md",
+            showRatios && "bg-gradient-to-br from-yellow-100 to-orange-100 border-yellow-400 scale-105"
           )}
-        </div>
-
-        {/* Quick Colors */}
-        <div className="flex gap-2">
-          {['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF'].map(color => (
-            <button
-              key={color}
-              onClick={() => setCanvasColor(color)}
-              className={cn(
-                "w-8 h-8 rounded-md border-2 transition-all",
-                currentColor === color ? "border-neutral-800 scale-110" : "border-neutral-300"
-              )}
-              style={{ backgroundColor: color }}
+          title={`比例: ${aspectRatio}`}
+        >
+          {ratioOptions.find(r => r.id === aspectRatio)?.icon && (
+            <>
+              {(() => {
+                const Icon = ratioOptions.find(r => r.id === aspectRatio)!.icon
+                return <Icon className="w-5 h-5" />
+              })()}
+            </>
+          )}
+        </button>
+        
+        {/* Ratio Picker Popup */}
+        {showRatios && (
+          <Portal>
+            <div 
+              className="fixed inset-0 z-[9998]" 
+              onClick={() => setShowRatios(false)}
             />
-          ))}
-        </div>
+            <div className="fixed z-[9999]" style={{ left: '6rem', bottom: '10rem' }}>
+              <div className="bg-white rounded-lg shadow-xl p-3 border border-neutral-200">
+                <div className="text-xs font-medium mb-2">选择比例</div>
+                <div className="space-y-1">
+                  {ratioOptions.map(({ id, icon: Icon, label }) => (
+                    <button
+                      key={id}
+                      onClick={() => {
+                        setAspectRatio(id)
+                        setShowRatios(false)
+                      }}
+                      className={cn(
+                        "w-full px-3 py-2 rounded-lg flex items-center gap-2 transition-all",
+                        "border border-neutral-200 hover:bg-neutral-50",
+                        aspectRatio === id && "bg-yellow-400 text-white border-yellow-400"
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="text-xs font-medium">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Portal>
+        )}
       </div>
 
-      {/* Aspect Ratio */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium text-neutral-700">画布比例</h3>
-        <div className="grid grid-cols-2 gap-1">
-          {ratioOptions.map(({ id, label, icon: Icon }) => (
+      {/* Divider */}
+      <div className="w-12 h-px bg-gradient-to-r from-transparent via-yellow-300 to-transparent" />
+
+      {/* Canvas Actions */}
+      <div className="space-y-1">
+        {canvasActions.map(({ id, icon: Icon, label, onClick }) => (
+          <div key={id} className="relative">
             <button
-              key={id}
-              onClick={() => setAspectRatio(id)}
-              className={cn(
-                "flex items-center justify-center gap-1 px-2 py-1.5 rounded-md transition-all",
-                "border text-xs font-medium",
-                aspectRatio === id ? [
-                  "bg-banana-50 border-banana-400 text-banana-700",
-                  "shadow-sm"
-                ] : [
-                  "bg-white border-neutral-200 text-neutral-600",
-                  "hover:bg-neutral-50 hover:border-neutral-300"
-                ]
-              )}
+              onClick={onClick}
+              className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 border-2 border-yellow-200/50 bg-white hover:bg-gradient-to-br hover:from-yellow-50 hover:to-orange-50 group text-neutral-600 shadow-sm hover:shadow-md hover:scale-105"
+              title={label}
             >
-              <Icon className="w-3 h-3" />
-              <span>{label}</span>
+              <Icon className="w-5 h-5" />
             </button>
-          ))}
-          <button
-            onClick={() => setAspectRatio('custom')}
-            className={cn(
-              "flex items-center justify-center gap-1 px-2 py-1.5 rounded-md transition-all",
-              "border text-xs font-medium",
-              aspectRatio === 'custom' ? [
-                "bg-banana-50 border-banana-400 text-banana-700",
-                "shadow-sm"
-              ] : [
-                "bg-white border-neutral-200 text-neutral-600",
-                "hover:bg-neutral-50 hover:border-neutral-300"
-              ]
-            )}
-          >
-            <Settings className="w-3 h-3" />
-            <span>自定义</span>
-          </button>
-        </div>
-        <div className="text-xs text-neutral-500 text-center">
-          {canvasWidth} × {canvasHeight}
-        </div>
-      </div>
-
-      {/* History Controls */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-medium text-neutral-700">历史</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              if (canUndo()) {
-                const newIndex = historyIndex - 1
-                undoCanvas()
-                // Trigger canvas restoration
-                const canvas = document.querySelector('canvas') as HTMLCanvasElement
-                const context = canvas?.getContext('2d')
-                if (canvas && context && history[newIndex]) {
-                  const img = new Image()
-                  img.onload = () => {
-                    context.clearRect(0, 0, canvas.width, canvas.height)
-                    context.fillStyle = '#ffffff'
-                    context.fillRect(0, 0, canvas.width, canvas.height)
-                    context.drawImage(img, 0, 0)
-                  }
-                  img.src = history[newIndex]
-                }
-              }
-            }}
-            disabled={!canUndo()}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg",
-              "border text-sm font-medium transition-all",
-              canUndo() ? [
-                "bg-white border-neutral-300 text-neutral-700",
-                "hover:bg-neutral-50 hover:border-neutral-400",
-                "active:scale-95 active:bg-neutral-100"
-              ] : [
-                "bg-neutral-100 border-neutral-200 text-neutral-400",
-                "cursor-not-allowed"
-              ]
-            )}
-          >
-            <Undo2 className="w-4 h-4" />
-            撤销
-          </button>
-          <button
-            onClick={() => {
-              if (canRedo()) {
-                const newIndex = historyIndex + 1
-                redoCanvas()
-                // Trigger canvas restoration
-                const canvas = document.querySelector('canvas') as HTMLCanvasElement
-                const context = canvas?.getContext('2d')
-                if (canvas && context && history[newIndex]) {
-                  const img = new Image()
-                  img.onload = () => {
-                    context.clearRect(0, 0, canvas.width, canvas.height)
-                    context.fillStyle = '#ffffff'
-                    context.fillRect(0, 0, canvas.width, canvas.height)
-                    context.drawImage(img, 0, 0)
-                  }
-                  img.src = history[newIndex]
-                }
-              }
-            }}
-            disabled={!canRedo()}
-            className={cn(
-              "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg",
-              "border text-sm font-medium transition-all",
-              canRedo() ? [
-                "bg-white border-neutral-300 text-neutral-700",
-                "hover:bg-neutral-50 hover:border-neutral-400",
-                "active:scale-95 active:bg-neutral-100"
-              ] : [
-                "bg-neutral-100 border-neutral-200 text-neutral-400",
-                "cursor-not-allowed"
-              ]
-            )}
-          >
-            <Redo2 className="w-4 h-4" />
-            重做
-          </button>
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   )

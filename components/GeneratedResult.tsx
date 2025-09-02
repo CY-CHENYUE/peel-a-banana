@@ -20,56 +20,48 @@ export default function GeneratedResult() {
     setGeneratedImage(null)
   }
 
-  // 只在有生成结果时显示，生成中的状态在画布上显示
+  // 只在有生成结果时显示
   if (!generatedImage) return null
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-200 p-4 shadow-sm space-y-3">
+    <div className="bg-white rounded-2xl p-6 shadow-lg space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-neutral-700">生成结果</h3>
         <button
           onClick={handleClose}
-          className="p-1 hover:bg-neutral-100 rounded-full transition-colors"
+          className="p-1.5 hover:bg-neutral-100 rounded-lg transition-colors"
         >
           <X className="w-4 h-4 text-neutral-500" />
         </button>
       </div>
 
       {generatedImage && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* Generated Image */}
-          <div className="relative rounded-lg overflow-hidden bg-neutral-100">
+          <div className="relative rounded-xl overflow-hidden bg-neutral-100">
             <img
               src={generatedImage}
               alt="Generated"
               className="w-full h-auto"
             />
+            
+            {/* Hover Overlay with Download */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+              <button
+                onClick={handleDownload}
+                className="p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform"
+              >
+                <Download className="w-6 h-6 text-neutral-700" />
+              </button>
+            </div>
           </div>
 
-          {/* Prompt Used */}
+          {/* Prompt Used - More subtle */}
           {currentPrompt && (
-            <div className="p-2 bg-neutral-50 rounded-lg">
-              <p className="text-xs text-neutral-500 mb-1">使用的提示词:</p>
-              <p className="text-xs text-neutral-700 line-clamp-2">{currentPrompt}</p>
+            <div className="px-3 py-2 bg-neutral-50 rounded-lg">
+              <p className="text-xs text-neutral-600 line-clamp-2">{currentPrompt}</p>
             </div>
           )}
-
-          {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleDownload}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2",
-                "px-3 py-2 rounded-lg",
-                "bg-banana-400 text-white",
-                "hover:bg-banana-500 transition-colors",
-                "text-sm font-medium"
-              )}
-            >
-              <Download className="w-4 h-4" />
-              下载图片
-            </button>
-          </div>
         </div>
       )}
     </div>
