@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import useAppStore from '@/stores/useAppStore'
 import { cn } from '@/lib/utils'
+import PeelingBananaLoader from './PeelingBananaLoader'
 
 interface CanvasEditorProps {
   className?: string
@@ -35,7 +36,8 @@ export default function CanvasEditor({ className }: CanvasEditorProps) {
     canRedo,
     setCanvasDataURL,
     generatedImage,
-    setGeneratedImage
+    setGeneratedImage,
+    isGenerating
   } = useAppStore()
 
   // Check if canvas is empty
@@ -341,6 +343,9 @@ export default function CanvasEditor({ className }: CanvasEditorProps) {
             {currentTool === 'eraser' ? '擦除中...' : '绘制中...'}
           </div>
         )}
+        
+        {/* 生成中的加载动画 */}
+        {isGenerating && <PeelingBananaLoader />}
       </div>
 
       {/* Quick Actions */}

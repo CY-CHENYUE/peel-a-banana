@@ -12,7 +12,7 @@ export default function GeneratedResult() {
     
     const link = document.createElement('a')
     link.href = generatedImage
-    link.download = `nano-banana-${Date.now()}.png`
+    link.download = `peel-a-banana-${Date.now()}.png`
     link.click()
   }
 
@@ -20,29 +20,22 @@ export default function GeneratedResult() {
     setGeneratedImage(null)
   }
 
-  if (!isGenerating && !generatedImage) return null
+  // 只在有生成结果时显示，生成中的状态在画布上显示
+  if (!generatedImage) return null
 
   return (
     <div className="bg-white rounded-xl border border-neutral-200 p-4 shadow-sm space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-neutral-700">生成结果</h3>
-        {generatedImage && (
-          <button
-            onClick={handleClose}
-            className="p-1 hover:bg-neutral-100 rounded-full transition-colors"
-          >
-            <X className="w-4 h-4 text-neutral-500" />
-          </button>
-        )}
+        <button
+          onClick={handleClose}
+          className="p-1 hover:bg-neutral-100 rounded-full transition-colors"
+        >
+          <X className="w-4 h-4 text-neutral-500" />
+        </button>
       </div>
 
-      {isGenerating ? (
-        <div className="flex flex-col items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 text-banana-500 animate-spin mb-3" />
-          <p className="text-sm text-neutral-600">AI 正在创作中...</p>
-          <p className="text-xs text-neutral-400 mt-1">请稍候片刻</p>
-        </div>
-      ) : generatedImage ? (
+      {generatedImage && (
         <div className="space-y-3">
           {/* Generated Image */}
           <div className="relative rounded-lg overflow-hidden bg-neutral-100">
@@ -78,7 +71,7 @@ export default function GeneratedResult() {
             </button>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }

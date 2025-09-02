@@ -55,4 +55,135 @@ body {
                 linear-gradient(135deg, #FFD700, #FFA500) border-box;
     border: 2px solid transparent;
   }
+  
+  /* Peeling Banana Loader Animations */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  
+  /* 香蕉皮剥开动画 - 每片皮有不同的延迟和角度 */
+  @keyframes peel-1 {
+    0%, 20% {
+      transform: rotateZ(0deg) rotateX(0deg);
+    }
+    40%, 100% {
+      transform: rotateZ(-60deg) rotateX(-15deg);
+    }
+  }
+  
+  .animate-peel-1 {
+    animation: peel-1 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    transform-style: preserve-3d;
+  }
+  
+  @keyframes peel-2 {
+    0%, 30% {
+      transform: rotateZ(0deg) rotateX(0deg);
+    }
+    50%, 100% {
+      transform: rotateZ(60deg) rotateX(-15deg);
+    }
+  }
+  
+  .animate-peel-2 {
+    animation: peel-2 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    transform-style: preserve-3d;
+  }
+  
+  @keyframes peel-3 {
+    0%, 40% {
+      transform: rotateZ(0deg) rotateX(0deg);
+    }
+    60%, 100% {
+      transform: rotateZ(-40deg) rotateX(10deg);
+    }
+  }
+  
+  .animate-peel-3 {
+    animation: peel-3 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    transform-style: preserve-3d;
+  }
+  
+  @keyframes peel-4 {
+    0%, 50% {
+      transform: rotateZ(0deg) rotateX(0deg);
+    }
+    70%, 100% {
+      transform: rotateZ(40deg) rotateX(10deg);
+    }
+  }
+  
+  .animate-peel-4 {
+    animation: peel-4 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    transform-style: preserve-3d;
+  }
+  
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 2s ease-in-out infinite;
+  }
+  
+  @keyframes bounce-slow {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  .animate-bounce-slow {
+    animation: bounce-slow 2s ease-in-out infinite;
+  }
+  
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .animate-spin-slow {
+    animation: spin-slow 4s linear infinite;
+  }
+  
+  @keyframes wobble {
+    0%, 100% {
+      transform: rotate(-5deg) scale(1);
+    }
+    25% {
+      transform: rotate(5deg) scale(1.05);
+    }
+    50% {
+      transform: rotate(-5deg) scale(1);
+    }
+    75% {
+      transform: rotate(5deg) scale(1.05);
+    }
+  }
+  
+  .animate-wobble {
+    animation: wobble 2s ease-in-out infinite;
+  }
 }
