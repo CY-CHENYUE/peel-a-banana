@@ -18,9 +18,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use OpenRouter to access Gemini 2.5 Flash Image Preview
-    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
-    const API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+    // 从环境变量读取配置
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY!
+    const API_URL = process.env.OPENROUTER_API_URL!
+    const MODEL = process.env.OPENROUTER_GENERATE_MODEL!
+    const TEMPERATURE = parseFloat(process.env.OPENROUTER_GENERATE_TEMPERATURE!)
+    const MAX_TOKENS = parseInt(process.env.OPENROUTER_GENERATE_MAX_TOKENS!)
 
     // Build message content
     const content = []
@@ -49,22 +52,22 @@ export async function POST(request: NextRequest) {
 
     // Build request body using OpenAI format with modalities for image generation
     const requestBody = {
-      model: 'google/gemini-2.5-flash-image-preview',
+      model: MODEL,
       messages: [{
         role: 'user',
         content: content
       }],
       modalities: ["image", "text"],  // Required for image generation
-      temperature: 0.9,
-      max_tokens: 8192
+      temperature: TEMPERATURE,
+      max_tokens: MAX_TOKENS
     }
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    console.log('[API] Generating image via OpenRouter with Gemini 2.5 Flash Image Preview...')
+    console.log(`[API] Generating image via OpenRouter with model: ${MODEL}`)
     console.log('[API] Mode:', referenceImages && referenceImages.length > 0 ? 'Image + Text-to-Image (editing)' : 'Text-to-Image')
     console.log('[API] Target dimensions:', dimensions?.width, 'x', dimensions?.height)
     console.log('[API] Number of images in content:', content.filter(c => c.type === 'image_url').length)
-    console.log('[API] Prompt includes aspect ratio hint:', prompt.includes('aspect ratio'))
+    console.log('[API] Temperature:', TEMPERATURE, '| Max tokens:', MAX_TOKENS)
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     
     // Make API request to OpenRouter

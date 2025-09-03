@@ -66,8 +66,12 @@ function parseStructuredText(text: string): any[] {
 
 // Analyze image(s) using Gemini via OpenRouter
 export async function analyzeImageWithOpenRouter(images: string | string[]): Promise<TagSuggestion[]> {
-  const API_KEY = process.env.OPENROUTER_API_KEY
-  const API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+  // 从环境变量读取配置
+  const API_KEY = process.env.OPENROUTER_API_KEY!
+  const API_URL = process.env.OPENROUTER_API_URL!
+  const MODEL = process.env.OPENROUTER_ANALYZE_MODEL!
+  const TEMPERATURE = parseFloat(process.env.OPENROUTER_ANALYZE_TEMPERATURE!)
+  const MAX_TOKENS = parseInt(process.env.OPENROUTER_ANALYZE_MAX_TOKENS!)
 
   try {
     // Handle single or multiple images
@@ -81,7 +85,7 @@ export async function analyzeImageWithOpenRouter(images: string | string[]): Pro
     }))
 
     const requestBody = {
-      model: 'google/gemini-2.5-pro',
+      model: MODEL,
       messages: [
         {
           role: 'user',
@@ -90,27 +94,33 @@ export async function analyzeImageWithOpenRouter(images: string | string[]): Pro
               type: 'text',
               text: `分析${imageArray.length > 1 ? '这些图片' : '这张图片'}，为用户生成6个有趣的AI图片编辑创意。
 
-首先描述你看到的内容（人物、动物、物体、场景等）。
+首先简要描述你看到的内容。
 
 然后生成6个创意编辑方案，每个方案用以下格式：
 
-标签#1:
+标签#N:
 类别: character/fun/scene/art/effect之一
 名称: 2-4个中文字
 表情: 一个emoji
 描述: 基于图片内容的创意描述
-提示词: Transform the [描述图片中的具体内容] into [创意效果描述]
+提示词: [英文提示词]
 关键词: 3个词
 
-请确保每个创意都引用图片中的具体内容，让用户知道是基于他们的图片来编辑的。`
+重要信息：
+- 这些提示词将被 Nano Banana (Gemini 2.5 Flash Image) 使用
+- Nano Banana 擅长理解详细的叙事描述，能融合多张图片，保持角色一致性，理解艺术风格和摄影术语
+- 不要只是简单地"transform"某物，而是创造有故事性、有氛围、有细节的场景
+
+${imageArray.length > 1 ? `特别注意：你收到了${imageArray.length}张图片，请创造性地利用它们之间的关系。可以融合它们的元素、创建故事序列、组合不同特征，或者发现它们之间有趣的联系。` : ''}
+
+发挥你的想象力，根据图片具体内容生成独特有趣的提示词。每个提示词都应该充满细节和创意，让生成的图片富有视觉冲击力。`
             },
             ...imageContents
           ]
         }
       ],
-      temperature: 0.8,
-      max_tokens: 8000  // Increased from 2000 to avoid truncation
-      // Removed response_format as it may not be supported by all models
+      temperature: TEMPERATURE,
+      max_tokens: MAX_TOKENS
     }
 
     const response = await fetch(API_URL, {

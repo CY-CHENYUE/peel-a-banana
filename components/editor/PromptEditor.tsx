@@ -144,8 +144,8 @@ export default function PromptEditor() {
         // Single content image - use Figure 1 and Figure 2 format
         fullPrompt = `Redraw the content of Figure 1 onto Figure 2, add content to Figure 1 to fit the aspect ratio of Figure 2, completely clear the content of Figure 2, and only retain the aspect ratio of Figure 2. ${localPrompt}`
       } else if (contentImageCount > 1) {
-        // Multiple content images - combine all onto the last figure
-        fullPrompt = `Redraw and combine the content from all previous figures onto the last figure, adjusting the composition to fit the aspect ratio of the last figure. The last figure is a blank template that defines the target ${aspectRatio} aspect ratio. ${localPrompt}`
+        // Multiple content images - use same clear instructions as single image for better aspect ratio control
+        fullPrompt = `Redraw and combine the content from all previous figures onto the last figure. The last figure is a blank canvas - completely clear its content and only retain its ${aspectRatio} aspect ratio. Add or crop content as needed to perfectly fit the aspect ratio of the last figure. ${localPrompt}`
       } else {
         // No content images, just text-to-image with aspect ratio
         fullPrompt = `${localPrompt}. Generate the image to fit the aspect ratio shown in the provided blank template (${aspectRatio}).`
