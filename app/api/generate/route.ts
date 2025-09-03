@@ -5,6 +5,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { prompt, referenceImages, dimensions } = body
     
+    console.log('[API] Received request:', {
+      hasPrompt: !!prompt,
+      referenceImagesCount: referenceImages?.length || 0,
+      dimensions: dimensions
+    })
+    
     if (!prompt) {
       return NextResponse.json(
         { error: 'No prompt provided' },

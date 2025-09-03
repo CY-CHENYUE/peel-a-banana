@@ -32,7 +32,9 @@ export default function DrawingToolbar() {
     canUndo,
     canRedo,
     undoCanvas,
-    redoCanvas
+    redoCanvas,
+    setCanvasDataURL,
+    addToCanvasHistory
   } = useAppStore()
   
   const [showBrushSize, setShowBrushSize] = useState(false)
@@ -131,6 +133,11 @@ export default function DrawingToolbar() {
           context.clearRect(0, 0, canvas.width, canvas.height)
           context.fillStyle = '#ffffff'
           context.fillRect(0, 0, canvas.width, canvas.height)
+          
+          // Save the cleared state to store
+          const dataURL = canvas.toDataURL()
+          addToCanvasHistory(dataURL)
+          setCanvasDataURL(dataURL)
         }
       }
     },
@@ -194,8 +201,8 @@ export default function DrawingToolbar() {
                   onClick={() => setShowBrushSize(false)}
                 />
                 <div className="fixed z-[9999] w-48" style={{ left: '6rem', top: '100px' }}>
-                  <div className="bg-white rounded-lg shadow-xl p-3 border border-neutral-200">
-                    <div className="text-xs font-medium mb-2">画笔大小</div>
+                  <div className="bg-white rounded-lg shadow-xl p-3 border-2 border-neutral-300">
+                    <div className="text-sm font-semibold text-neutral-800 mb-2">画笔大小</div>
                     <input
                       type="range"
                       min="1"
@@ -204,7 +211,7 @@ export default function DrawingToolbar() {
                       onChange={(e) => setBrushSize(Number(e.target.value))}
                       className="w-full"
                     />
-                    <div className="text-xs text-center mt-1">{brushSize}px</div>
+                    <div className="text-xs font-medium text-neutral-700 text-center mt-1">{brushSize}px</div>
                   </div>
                 </div>
               </Portal>
@@ -218,8 +225,8 @@ export default function DrawingToolbar() {
                   onClick={() => setShowEraserSize(false)}
                 />
                 <div className="fixed z-[9999] w-48" style={{ left: '6rem', top: '160px' }}>
-                  <div className="bg-white rounded-lg shadow-xl p-3 border border-neutral-200">
-                    <div className="text-xs font-medium mb-2">橡皮擦大小</div>
+                  <div className="bg-white rounded-lg shadow-xl p-3 border-2 border-neutral-300">
+                    <div className="text-sm font-semibold text-neutral-800 mb-2">橡皮擦大小</div>
                     <input
                       type="range"
                       min="5"
@@ -228,7 +235,7 @@ export default function DrawingToolbar() {
                       onChange={(e) => setEraserSize(Number(e.target.value))}
                       className="w-full"
                     />
-                    <div className="text-xs text-center mt-1">{eraserSize}px</div>
+                    <div className="text-xs font-medium text-neutral-700 text-center mt-1">{eraserSize}px</div>
                   </div>
                 </div>
               </Portal>
@@ -279,14 +286,14 @@ export default function DrawingToolbar() {
               className="fixed inset-0 z-[9998]" 
               onClick={() => setShowColorPicker(false)}
             />
-            <div className="fixed z-[9999] w-64" style={{ left: '6rem', top: '50%', transform: 'translateY(-50%)' }}>
-              <div className="bg-white rounded-lg shadow-xl p-4 border border-neutral-200">
-                <div className="text-sm font-medium mb-3">选择颜色</div>
+            <div className="fixed z-[9999]" style={{ left: '6rem', top: '50%', transform: 'translateY(-50%)' }}>
+              <div className="bg-white rounded-lg shadow-xl p-4 border-2 border-neutral-300">
+                <div className="text-base font-semibold text-neutral-800 mb-3">选择颜色</div>
                 
                 {/* Quick Colors */}
                 <div className="mb-4">
-                  <div className="text-xs text-neutral-500 mb-2">快速选择</div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="text-xs font-medium text-neutral-600 mb-2">快速选择</div>
+                  <div className="flex gap-1.5">
                     {quickColors.map(color => (
                       <button
                         key={color}
@@ -295,7 +302,7 @@ export default function DrawingToolbar() {
                           setShowColorPicker(false)
                         }}
                         className={cn(
-                          "w-10 h-10 rounded-lg border-2 transition-all hover:scale-110",
+                          "w-7 h-7 rounded-md border-2 transition-all hover:scale-110",
                           currentColor === color ? "border-yellow-400 shadow-md" : "border-neutral-300"
                         )}
                         style={{ backgroundColor: color }}
@@ -310,14 +317,14 @@ export default function DrawingToolbar() {
                     color={currentColor}
                     onChange={(color) => setCanvasColor(color.hex)}
                     disableAlpha
-                    width="200px"
+                    width="180px"
                   />
                 </div>
                 
                 {/* Current Color Display */}
                 <div className="mt-3 flex items-center justify-between text-xs">
-                  <span className="text-neutral-500">当前颜色</span>
-                  <span className="font-mono text-neutral-700">{currentColor}</span>
+                  <span className="font-medium text-neutral-600">当前颜色</span>
+                  <span className="font-mono font-semibold text-neutral-800">{currentColor}</span>
                 </div>
               </div>
             </div>
@@ -357,8 +364,8 @@ export default function DrawingToolbar() {
               onClick={() => setShowRatios(false)}
             />
             <div className="fixed z-[9999]" style={{ left: '6rem', bottom: '10rem' }}>
-              <div className="bg-white rounded-lg shadow-xl p-3 border border-neutral-200">
-                <div className="text-xs font-medium mb-2">选择比例</div>
+              <div className="bg-white rounded-lg shadow-xl p-3 border-2 border-neutral-300">
+                <div className="text-sm font-semibold text-neutral-800 mb-2">选择比例</div>
                 <div className="space-y-1">
                   {ratioOptions.map(({ id, icon: Icon, label }) => (
                     <button
@@ -374,7 +381,7 @@ export default function DrawingToolbar() {
                       )}
                     >
                       <Icon className="w-4 h-4" />
-                      <span className="text-xs font-medium">{label}</span>
+                      <span className="text-xs font-semibold">{label}</span>
                     </button>
                   ))}
                 </div>

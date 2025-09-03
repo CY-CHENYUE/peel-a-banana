@@ -1,7 +1,7 @@
 'use client'
 
-import { Upload, X, ImageIcon } from 'lucide-react'
-import { useCallback } from 'react'
+import { Upload, X, ImageIcon, Sparkles, RefreshCw, AlertCircle } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import useAppStore from '@/stores/useAppStore'
 import { cn } from '@/lib/utils'
@@ -10,14 +10,59 @@ export default function ImageGallery() {
   const { 
     uploadedImages,
     addUploadedImage,
-    removeUploadedImage
+    removeUploadedImage,
+    analyzedTags,
+    selectedTagId,
+    setAnalyzedTags,
+    selectAnalyzedTag,
+    setCurrentPrompt
   } = useAppStore()
+  
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null)
+
+  // Analyze all uploaded images
+  const analyzeImages = async () => {
+    if (uploadedImages.length === 0) return
+    
+    setIsAnalyzing(true)
+    setAnalyzeError(null)
+    try {
+      const imageDataArray = uploadedImages.map(img => img.preview)
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ images: imageDataArray })
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        setAnalyzedTags(data.tags || [])
+        // Clear previous selection when new tags are generated
+        selectAnalyzedTag(null)
+        setCurrentPrompt('')
+        setAnalyzeError(null)
+      } else if (data.error) {
+        // Handle API error response
+        setAnalyzeError(data.message || 'AI分析失败，请重试')
+        setAnalyzedTags([])
+      }
+    } catch (error) {
+      console.error('Failed to analyze images:', error)
+      setAnalyzeError('网络错误，请检查连接后重试')
+      setAnalyzedTags([])
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     acceptedFiles.forEach(file => {
       const reader = new FileReader()
-      reader.onload = (e) => {
-        addUploadedImage(file, e.target?.result as string)
+      reader.onload = async (e) => {
+        const imageData = e.target?.result as string
+        addUploadedImage(file, imageData)
       }
       reader.readAsDataURL(file)
     })
@@ -129,14 +174,97 @@ export default function ImageGallery() {
         </>
       )}
 
-      {/* Tips */}
+      {/* Tips & Analysis */}
       {uploadedImages.length > 0 && (
-        <div className="flex items-start gap-2 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200/50">
-          <ImageIcon className="w-4 h-4 text-orange-500 mt-0.5" />
-          <p className="text-xs font-medium text-orange-700">
-            上传的图片将作为AI生成的参考
-          </p>
-        </div>
+        <>
+          <div className="flex items-start gap-2 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200/50">
+            <ImageIcon className="w-4 h-4 text-orange-500 mt-0.5" />
+            <p className="text-xs font-medium text-orange-700">
+              上传的图片将作为AI生成的参考
+            </p>
+          </div>
+          
+          {/* Analysis Section */}
+          {!isAnalyzing && analyzedTags.length === 0 && (
+            <button
+              onClick={analyzeImages}
+              className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 rounded-lg border border-blue-200 transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-blue-500" />
+              <span className="text-xs font-medium text-blue-700">
+                AI 智能分析图片
+              </span>
+            </button>
+          )}
+          
+          {/* Analysis Status */}
+          {isAnalyzing && (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <Sparkles className="w-4 h-4 text-blue-500 animate-pulse" />
+              <p className="text-xs font-medium text-blue-700">
+                正在分析图片内容...
+              </p>
+            </div>
+          )}
+          
+          {/* Error Message */}
+          {analyzeError && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg border border-red-200">
+              <AlertCircle className="w-4 h-4 text-red-500" />
+              <p className="text-xs font-medium text-red-700 flex-1">
+                {analyzeError}
+              </p>
+              <button
+                onClick={analyzeImages}
+                className="text-xs text-red-600 hover:text-red-700 underline"
+              >
+                重试
+              </button>
+            </div>
+          )}
+          
+          {/* Analyzed Tags */}
+          {analyzedTags.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold text-neutral-700">智能分析结果</h4>
+                <button
+                  onClick={analyzeImages}
+                  className="p-1 hover:bg-neutral-100 rounded-full transition-all hover:scale-110"
+                  title="重新分析"
+                >
+                  <RefreshCw className="w-3 h-3 text-neutral-500 hover:text-blue-500" />
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {analyzedTags.slice(0, 6).map(tag => (
+                  <button
+                    key={tag.id}
+                    onClick={() => {
+                      if (selectedTagId === tag.id) {
+                        // 取消选择
+                        selectAnalyzedTag(null)
+                        setCurrentPrompt('')
+                      } else {
+                        // 选择新标签并填充提示词
+                        selectAnalyzedTag(tag.id)
+                        setCurrentPrompt(tag.prompt)
+                      }
+                    }}
+                    className={cn(
+                      "px-2 py-1 text-[10px] rounded-full transition-all",
+                      selectedTagId === tag.id
+                        ? "bg-yellow-400 text-white font-semibold shadow-md"
+                        : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                    )}
+                  >
+                    {tag.emoji} {tag.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

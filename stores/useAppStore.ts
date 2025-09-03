@@ -14,9 +14,14 @@ interface AppStore {
   tags: Tag[]
   selectedTag: Tag | null
   activeCategory: string
+  analyzedTags: Tag[]
+  selectedTagId: number | null
   setTags: (tags: Tag[]) => void
   selectTag: (tag: Tag) => void
   setActiveCategory: (category: string) => void
+  setAnalyzedTags: (tags: Tag[]) => void
+  selectAnalyzedTag: (tagId: number | null) => void
+  getSelectedTagPrompt: () => string | null
   
   // Prompt state
   currentPrompt: string
@@ -92,6 +97,8 @@ const useAppStore = create<AppStore>((set, get) => ({
   tags: [],
   selectedTag: null,
   activeCategory: 'all',
+  analyzedTags: [],
+  selectedTagId: null,
   currentPrompt: '',
   originalPrompt: '',
   promptSource: 'ai',
@@ -125,6 +132,14 @@ const useAppStore = create<AppStore>((set, get) => ({
   setTags: (tags) => set({ tags }),
   selectTag: (tag) => set({ selectedTag: tag }),
   setActiveCategory: (category) => set({ activeCategory: category }),
+  setAnalyzedTags: (tags) => set({ analyzedTags: tags }),
+  selectAnalyzedTag: (tagId) => set({ selectedTagId: tagId }),
+  getSelectedTagPrompt: () => {
+    const state = get()
+    if (!state.selectedTagId) return null
+    const tag = state.analyzedTags.find(t => t.id === state.selectedTagId)
+    return tag?.prompt || null
+  },
   
   // Prompt actions
   setCurrentPrompt: (prompt) => {

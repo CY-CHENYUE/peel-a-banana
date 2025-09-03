@@ -109,15 +109,9 @@ export default function CanvasEditor({ className }: CanvasEditorProps) {
     
     contextRef.current = context
     
-    // Immediately update canvas data URL
-    const dataURL = canvas.toDataURL('image/png')
-    setCanvasDataURL(dataURL)
+    // Don't save empty canvas as dataURL
+    // Only save when user actually draws something
     console.log('Canvas initialized with dimensions:', canvasWidth, 'x', canvasHeight)
-    
-    // Also save to history
-    if (history.length === 0) {
-      addToCanvasHistory(dataURL)
-    }
   }, [canvasWidth, canvasHeight])
 
   // Handle undo/redo - restore canvas from history

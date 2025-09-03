@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sparkles, Wand2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useAppStore from '@/stores/useAppStore'
@@ -18,6 +18,51 @@ const createBlankReferenceImage = (width: number, height: number): string => {
   return canvas.toDataURL('image/png')
 }
 
+// 检查画布是否为空（只有白色背景）
+const isCanvasEmpty = (canvasDataURL: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        resolve(true)
+        return
+      }
+      
+      ctx.drawImage(img, 0, 0)
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const pixels = imageData.data
+      
+      let nonWhiteCount = 0
+      
+      // Check if all pixels are white (with tolerance for compression artifacts)
+      for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i]
+        const g = pixels[i + 1]
+        const b = pixels[i + 2]
+        const a = pixels[i + 3]
+        
+        // If we find any non-white pixel (with tolerance for compression)
+        // Consider pixels with RGB values < 253 as non-white to handle compression artifacts
+        if (a > 0 && (r < 253 || g < 253 || b < 253)) {
+          nonWhiteCount++
+          if (nonWhiteCount > 100) {  // If more than 100 non-white pixels, it's definitely not empty
+            resolve(false)
+            return
+          }
+        }
+      }
+      
+      // If we found some non-white pixels but less than 100, treat as empty (likely artifacts)
+      resolve(nonWhiteCount === 0 || nonWhiteCount < 100)
+    }
+    img.src = canvasDataURL
+  })
+}
+
 export default function PromptEditor() {
   const {
     currentPrompt,
@@ -30,6 +75,11 @@ export default function PromptEditor() {
   } = useAppStore()
 
   const [localPrompt, setLocalPrompt] = useState(currentPrompt)
+  
+  // 同步 store 中的 currentPrompt 到本地状态
+  useEffect(() => {
+    setLocalPrompt(currentPrompt)
+  }, [currentPrompt])
 
   const handleGenerate = async () => {
     if (!localPrompt.trim() || isGenerating) return
@@ -49,50 +99,60 @@ export default function PromptEditor() {
       // Create aspect ratio reference
       const aspectRatioReference = createBlankReferenceImage(canvasWidth, canvasHeight)
       
-      // Prepare images array
-      const images: string[] = []
-      const hasCanvasContent = !!canvasDataURL
+      // Prepare reference images array in the format expected by API
+      const referenceImages: Array<{data: string, type: string, description: string}> = []
       
-      if (hasCanvasContent) {
-        images.push(canvasDataURL)
+      // Check if canvas has actual content (not just white background)
+      let hasCanvasContent = false
+      if (canvasDataURL) {
+        hasCanvasContent = !(await isCanvasEmpty(canvasDataURL))
+        console.log('Canvas has actual content:', hasCanvasContent)
+      }
+      
+      if (hasCanvasContent && canvasDataURL) {
+        referenceImages.push({
+          data: canvasDataURL,
+          type: 'canvas',
+          description: '用户手绘草图'
+        })
       }
       
       if (uploadedImages.length > 0) {
-        uploadedImages.forEach(img => images.push(img.preview))
+        uploadedImages.forEach((img, index) => {
+          referenceImages.push({
+            data: img.preview,
+            type: 'reference',
+            description: `参考图片 ${index + 1}`
+          })
+        })
       }
       
       // Always add blank reference for aspect ratio
-      images.push(aspectRatioReference)
+      referenceImages.push({
+        data: aspectRatioReference,
+        type: 'aspect_ratio',
+        description: `目标比例 ${aspectRatio} (${canvasWidth}x${canvasHeight})`
+      })
       
-      // Construct prompt with aspect ratio hint
-      let aspectRatioHint = ''
-      if (aspectRatio === '1:1') {
-        aspectRatioHint = 'Generate a square image with 1:1 aspect ratio.'
-      } else if (aspectRatio === '16:9') {
-        aspectRatioHint = 'Generate a wide landscape image with 16:9 aspect ratio.'
-      } else if (aspectRatio === '9:16') {
-        aspectRatioHint = 'Generate a tall portrait image with 9:16 aspect ratio.'
-      } else if (aspectRatio === '4:3') {
-        aspectRatioHint = 'Generate a landscape image with 4:3 aspect ratio.'
-      } else if (aspectRatio === '3:4') {
-        aspectRatioHint = 'Generate a portrait image with 3:4 aspect ratio.'
-      }
+      // Construct prompt based on number of content images
+      let fullPrompt = ''
       
-      let fullPrompt = localPrompt
+      // Count total content images (canvas + uploaded)
+      const contentImageCount = (hasCanvasContent ? 1 : 0) + uploadedImages.length
       
-      // Add context based on inputs
-      if (hasCanvasContent && uploadedImages.length > 0) {
-        fullPrompt = `Using the hand-drawn sketch in the first image and the reference photo(s), ${localPrompt}. Maintain the composition and structure from the sketch while applying the style and details from the reference. ${aspectRatioHint} The last image is a blank canvas showing the desired output dimensions.`
-      } else if (hasCanvasContent) {
-        fullPrompt = `Based on the hand-drawn sketch in the image, ${localPrompt}. Transform the sketch into a detailed, polished image while preserving the original composition. ${aspectRatioHint} The last image is a blank canvas showing the desired output dimensions.`
-      } else if (uploadedImages.length > 0) {
-        fullPrompt = `Using the provided reference image(s), ${localPrompt}. ${aspectRatioHint} The last image is a blank canvas showing the desired output dimensions.`
+      if (contentImageCount === 1) {
+        // Single content image - use Figure 1 and Figure 2 format
+        fullPrompt = `Redraw the content of Figure 1 onto Figure 2, add content to Figure 1 to fit the aspect ratio of Figure 2, completely clear the content of Figure 2, and only retain the aspect ratio of Figure 2. ${localPrompt}`
+      } else if (contentImageCount > 1) {
+        // Multiple content images - combine all onto the last figure
+        fullPrompt = `Redraw and combine the content from all previous figures onto the last figure, adjusting the composition to fit the aspect ratio of the last figure. The last figure is a blank template that defines the target ${aspectRatio} aspect ratio. ${localPrompt}`
       } else {
-        fullPrompt = `${localPrompt}. ${aspectRatioHint} The image is a blank canvas showing the desired output dimensions.`
+        // No content images, just text-to-image with aspect ratio
+        fullPrompt = `${localPrompt}. Generate the image to fit the aspect ratio shown in the provided blank template (${aspectRatio}).`
       }
       
       console.log('Final prompt:', fullPrompt)
-      console.log('Number of images:', images.length)
+      console.log('Number of reference images:', referenceImages.length)
       
       // Call API
       const response = await fetch('/api/generate', {
@@ -102,9 +162,11 @@ export default function PromptEditor() {
         },
         body: JSON.stringify({
           prompt: fullPrompt,
-          images: images,
-          width: canvasWidth,
-          height: canvasHeight
+          referenceImages: referenceImages,
+          dimensions: {
+            width: canvasWidth,
+            height: canvasHeight
+          }
         })
       })
       
