@@ -37,10 +37,14 @@ interface AppStore {
   generatedImage: string | null
   canvasDataURL: string | null
   showCelebration: boolean
+  generatedHistory: Array<{ id: string; url: string; prompt: string; timestamp: number }>
   setIsGenerating: (generating: boolean) => void
   setGeneratedImage: (image: string | null) => void
   setCanvasDataURL: (dataURL: string | null) => void
   setShowCelebration: (show: boolean) => void
+  addToGeneratedHistory: (url: string, prompt: string) => void
+  removeFromHistory: (id: string) => void
+  clearGeneratedHistory: () => void
   
   // History
   history: HistoryItem[]
@@ -76,7 +80,7 @@ interface AppStore {
 const initialCanvasState: CanvasState = {
   aspectRatio: '3:4',
   canvasWidth: 1000,
-  canvasHeight: 750,
+  canvasHeight: 600,
   currentTool: 'select',
   brushSize: 5,
   currentColor: '#000000',
@@ -111,6 +115,7 @@ const useAppStore = create<AppStore>((set, get) => ({
   generatedImage: null,
   canvasDataURL: null,
   showCelebration: false,
+  generatedHistory: [],
   history: [],
   canvas: initialCanvasState,
   targetWidth: 864,
@@ -173,6 +178,21 @@ const useAppStore = create<AppStore>((set, get) => ({
   setGeneratedImage: (image) => set({ generatedImage: image }),
   setCanvasDataURL: (dataURL) => set({ canvasDataURL: dataURL }),
   setShowCelebration: (show) => set({ showCelebration: show }),
+  
+  addToGeneratedHistory: (url, prompt) => set((state) => ({
+    generatedHistory: [{ 
+      id: Date.now().toString(), 
+      url, 
+      prompt, 
+      timestamp: Date.now() 
+    }, ...state.generatedHistory].slice(0, 50) // Keep last 50 images
+  })),
+  
+  removeFromHistory: (id) => set((state) => ({
+    generatedHistory: state.generatedHistory.filter(img => img.id !== id)
+  })),
+  
+  clearGeneratedHistory: () => set({ generatedHistory: [] }),
   
   // History actions
   addToHistory: (item) => set((state) => ({

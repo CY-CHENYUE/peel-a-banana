@@ -16,7 +16,8 @@ export default function PromptEditor() {
     setIsGenerating,
     setGeneratedImage,
     setShowCelebration,
-    setCurrentPrompt: savePromptToStore
+    setCurrentPrompt: savePromptToStore,
+    addToGeneratedHistory
   } = useAppStore()
 
   const [localPrompt, setLocalPrompt] = useState(currentPrompt)
@@ -62,7 +63,7 @@ export default function PromptEditor() {
         })
         
         // 有用户输入时，明确说明要生成图片并转换内容
-        fullPrompt = `Generate an image. Transform the content of Figure 1 into: ${localPrompt}. Redraw it onto Figure 2, extending the scene to fit the aspect ratio of Figure 2. Completely clear the content of Figure 2 and only retain its aspect ratio.`
+        fullPrompt = `Generate a full-frame image that fills the entire canvas without any white borders or margins. Transform the content of Figure 1 into: ${localPrompt}. Redraw it onto Figure 2, extending the scene edge-to-edge to completely fill the aspect ratio of Figure 2. The generated image must cover 100% of the canvas area with no empty spaces. Completely clear the content of Figure 2 and only retain its aspect ratio.`
       } else {
         // 没有画布内容时，使用预生成的白底参考图
         const aspectRatioReference = await getReferenceImageDataURL(aspectRatio as AspectRatio)
@@ -72,7 +73,7 @@ export default function PromptEditor() {
           description: `${aspectRatio} aspect ratio template`
         })
         
-        fullPrompt = `Generate an image: ${localPrompt}. The image must match the exact dimensions and aspect ratio of the provided template (${aspectRatio}).`
+        fullPrompt = `Generate a full-frame image that fills the entire canvas without any white borders or margins: ${localPrompt}. The image must match the exact dimensions and aspect ratio of the provided template (${aspectRatio}), covering 100% of the canvas area edge-to-edge with no empty spaces.`
       }
       
       console.log('Final prompt:', fullPrompt)
@@ -103,6 +104,7 @@ export default function PromptEditor() {
       
       if (data.imageUrl) {
         setGeneratedImage(data.imageUrl)
+        addToGeneratedHistory(data.imageUrl, localPrompt) // 添加到历史记录 - 只保存用户输入的提示词
         setShowCelebration(true) // 触发庆祝动画
         console.log('Image generated successfully')
       } else {

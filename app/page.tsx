@@ -7,6 +7,7 @@ import DrawingToolbar from '@/components/canvas/DrawingToolbar'
 import ImageGallery from '@/components/canvas/ImageGallery'
 import PromptEditor from '@/components/editor/PromptEditor'
 import GeneratedResult from '@/components/GeneratedResult'
+import GeneratedGallery from '@/components/GeneratedGallery'
 import CelebrationOverlay from '@/components/CelebrationOverlay'
 import useAppStore from '@/stores/useAppStore'
 import { preloadAllReferenceImages } from '@/lib/referenceImages'
@@ -140,8 +141,14 @@ export default function Home() {
         <div className="flex-1 flex overflow-hidden">
           {/* Canvas Section */}
           <div className="flex-1 p-4 overflow-auto">
-            <div className="flex items-center justify-center min-h-[750px]">
-              <KonvaCanvasEditor />
+            <div className="space-y-4">
+              {/* Canvas */}
+              <div className="flex items-center justify-center min-h-[600px]">
+                <KonvaCanvasEditor />
+              </div>
+              
+              {/* Generated Images Gallery */}
+              <GeneratedGallery />
             </div>
           </div>
 
