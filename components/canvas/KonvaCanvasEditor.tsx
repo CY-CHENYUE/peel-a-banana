@@ -122,9 +122,16 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
   const [processedImageIds, setProcessedImageIds] = useState<Set<string>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // 切换工具时取消选择
+  useEffect(() => {
+    if (currentTool !== 'select') {
+      setSelectedId(null)
+    }
+  }, [currentTool])
+
   // 监听上传的图片，自动添加到画布
   useEffect(() => {
-    uploadedImages.forEach(uploadedImg => {
+    uploadedImages.forEach((uploadedImg, index) => {
       if (!processedImageIds.has(uploadedImg.id)) {
         // 创建 Image 对象以获取原始尺寸
         const img = new Image()
@@ -145,11 +152,16 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
             width = maxSize * ratio
           }
           
+          // 固定位置：堆叠排列，每张图片偏移30像素
+          const baseX = 50
+          const baseY = 50
+          const offset = index * 30
+          
           const newImage = {
             id: uploadedImg.id,
             src: uploadedImg.preview,
-            x: Math.random() * Math.max(0, canvasWidth - width),
-            y: Math.random() * Math.max(0, canvasHeight - height),
+            x: Math.min(baseX + offset, canvasWidth - width - 50), // 确保不超出右边界
+            y: Math.min(baseY + offset, canvasHeight - height - 50), // 确保不超出下边界
             width: width,
             height: height,
           }
@@ -209,11 +221,22 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
   // 保存画布状态
   const saveCanvasState = useCallback(() => {
     if (stageRef.current) {
-      const dataURL = stageRef.current.toDataURL()
-      setCanvasDataURL(dataURL)
-      addToCanvasHistory(dataURL)
+      // 保存前先取消选择，避免选择框被保存
+      const previousSelectedId = selectedId
+      setSelectedId(null)
+      
+      // 等待一帧让UI更新
+      setTimeout(() => {
+        if (stageRef.current) {
+          const dataURL = stageRef.current.toDataURL()
+          setCanvasDataURL(dataURL)
+          addToCanvasHistory(dataURL)
+          // 如果需要，可以恢复选择（可选）
+          // setSelectedId(previousSelectedId)
+        }
+      }, 0)
     }
-  }, [setCanvasDataURL, addToCanvasHistory])
+  }, [setCanvasDataURL, addToCanvasHistory, selectedId])
   
   // 初始化时保存空白画布
   useEffect(() => {
@@ -264,9 +287,9 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
   // 处理生成的图片
   useEffect(() => {
     if (generatedImage) {
-      // 清空现有内容
-      setLines([])
-      setImages([])
+      // 不清空现有内容，采用叠加模式
+      // 可以选择性地清空绘画线条，保留图片
+      // setLines([])  // 如果需要清空手绘内容，可以取消注释
       
       // 按比例缩放图片以适应画布，保持宽高比
       // 使用目标尺寸来计算正确的显示比例
@@ -287,9 +310,10 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
         height: displayHeight,
       }
       
-      console.log(`Displaying generated image: ${targetWidth}x${targetHeight} -> ${displayWidth}x${displayHeight} at (${x}, ${y})`)
+      console.log(`Adding generated image: ${targetWidth}x${targetHeight} -> ${displayWidth}x${displayHeight} at (${x}, ${y})`)
       
-      setImages([newImage])
+      // 添加到现有图片列表，而不是替换
+      setImages(prev => [...prev, newImage])
       setGeneratedImage(null)
       saveCanvasState()
     }
@@ -309,8 +333,8 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
 
   // 点击舞台空白处取消选择
   const checkDeselect = (e: any) => {
-    // 点击空白处
-    const clickedOnEmpty = e.target === e.target.getStage()
+    // 点击空白处或背景层
+    const clickedOnEmpty = e.target === e.target.getStage() || e.target.className === 'Rect'
     if (clickedOnEmpty) {
       setSelectedId(null)
     }

@@ -60,14 +60,8 @@ export default function PromptEditor() {
           description: `Target ${aspectRatio} template (Figure 2)`
         })
         
-        // 根据是否有用户输入，使用不同的提示词策略
-        if (localPrompt.trim()) {
-          // 有用户输入时，明确说明要转换内容
-          fullPrompt = `Transform the content of Figure 1 into: ${localPrompt}. Redraw it onto Figure 2, extending the scene to fit the aspect ratio of Figure 2. Completely clear the content of Figure 2 and only retain its aspect ratio.`
-        } else {
-          // 没有用户输入时，只做比例转换
-          fullPrompt = "Redraw the content of Figure 1 onto Figure 2, add content to Figure 1 to fit the aspect ratio of Figure 2, completely clear the content of Figure 2, and only retain the aspect ratio of Figure 2."
-        }
+        // 有用户输入时，明确说明要生成图片并转换内容
+        fullPrompt = `Generate an image. Transform the content of Figure 1 into: ${localPrompt}. Redraw it onto Figure 2, extending the scene to fit the aspect ratio of Figure 2. Completely clear the content of Figure 2 and only retain its aspect ratio.`
       } else {
         // 没有画布内容时，使用预生成的白底参考图
         const aspectRatioReference = await getReferenceImageDataURL(aspectRatio as AspectRatio)
@@ -77,7 +71,7 @@ export default function PromptEditor() {
           description: `${aspectRatio} aspect ratio template`
         })
         
-        fullPrompt = `${localPrompt}. Generate an image to fit the aspect ratio shown in the provided template (${aspectRatio}).`
+        fullPrompt = `Generate an image: ${localPrompt}. The image must match the exact dimensions and aspect ratio of the provided template (${aspectRatio}).`
       }
       
       console.log('Final prompt:', fullPrompt)
