@@ -24,7 +24,7 @@ export interface HistoryItem {
 
 export type PromptSource = 'ai' | 'custom' | 'modified'
 
-export type DrawingTool = 'brush' | 'eraser'
+export type DrawingTool = 'brush' | 'eraser' | 'select'
 
 export type AspectRatio = '1:1' | '3:4' | '4:3' | '9:16' | '16:9' | 'custom'
 

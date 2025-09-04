@@ -1,12 +1,14 @@
 'use client'
 
+import { useEffect } from 'react'
 import Header from '@/components/Header'
-import CanvasEditor from '@/components/canvas/CanvasEditor'
+import KonvaCanvasEditor from '@/components/canvas/KonvaCanvasEditor'
 import DrawingToolbar from '@/components/canvas/DrawingToolbar'
 import ImageGallery from '@/components/canvas/ImageGallery'
 import PromptEditor from '@/components/editor/PromptEditor'
 import GeneratedResult from '@/components/GeneratedResult'
 import useAppStore from '@/stores/useAppStore'
+import { preloadAllReferenceImages } from '@/lib/referenceImages'
 
 // Mock data for testing (will be replaced by API)
 import { Tag } from '@/types'
@@ -103,6 +105,15 @@ export default function Home() {
     uploadedImages
   } = useAppStore()
 
+  // Preload all reference images on component mount
+  useEffect(() => {
+    preloadAllReferenceImages().then(() => {
+      console.log('All reference images preloaded successfully')
+    }).catch(error => {
+      console.error('Error preloading reference images:', error)
+    })
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-orange-50 relative overflow-hidden">
       {/* Background decoration */}
@@ -125,11 +136,9 @@ export default function Home() {
         {/* Main Content Area */}
         <div className="flex-1 flex overflow-hidden">
           {/* Canvas Section */}
-          <div className="flex-1 p-8 overflow-auto">
-            <div className="h-full min-h-[600px]">
-              <div className="h-full bg-white rounded-2xl shadow-lg overflow-hidden border border-neutral-200">
-                <CanvasEditor className="h-full" />
-              </div>
+          <div className="flex-1 p-4 overflow-auto">
+            <div className="flex items-center justify-center min-h-[750px]">
+              <KonvaCanvasEditor />
             </div>
           </div>
 

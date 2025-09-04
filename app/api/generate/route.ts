@@ -51,13 +51,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Build request body using OpenAI format with modalities for image generation
+    // Build request body - always include modalities for image generation
     const requestBody = {
       model: MODEL,
       messages: [{
         role: 'user',
         content: content
       }],
-      modalities: ["image", "text"],  // Required for image generation
+      // Always include modalities for image generation capability
+      modalities: ["image", "text"],
       temperature: TEMPERATURE,
       max_tokens: MAX_TOKENS
     }
@@ -70,17 +72,56 @@ export async function POST(request: NextRequest) {
     console.log('[API] Temperature:', TEMPERATURE, '| Max tokens:', MAX_TOKENS)
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     
-    // Make API request to OpenRouter
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'http://localhost:3000',
-        'X-Title': 'Peel a Banana'
-      },
-      body: JSON.stringify(requestBody)
-    })
+    // Make API request to OpenRouter with retry logic
+    let response
+    let lastError
+    const maxRetries = 2
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'http://localhost:3000',
+            'X-Title': 'Peel a Banana'
+          },
+          body: JSON.stringify(requestBody),
+          // Add timeout
+          signal: AbortSignal.timeout(60000) // 60 second timeout
+        })
+        
+        if (response.ok) {
+          break // Success, exit retry loop
+        }
+        
+        // If not ok but not a network error, don't retry
+        if (response.status < 500) {
+          break
+        }
+        
+        lastError = `HTTP ${response.status}`
+        console.log(`[API] Attempt ${attempt + 1} failed with status ${response.status}, retrying...`)
+        
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+        }
+      } catch (error) {
+        lastError = error
+        console.log(`[API] Attempt ${attempt + 1} failed with error:`, error)
+        
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+        }
+      }
+    }
+    
+    if (!response) {
+      throw new Error(`Network error after ${maxRetries + 1} attempts: ${lastError}`)
+    }
 
     if (!response.ok) {
       const errorText = await response.text()

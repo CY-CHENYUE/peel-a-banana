@@ -4,64 +4,8 @@ import { useState, useEffect } from 'react'
 import { Sparkles, Wand2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useAppStore from '@/stores/useAppStore'
-
-// 创建纯白色参考图片用于比例控制
-const createBlankReferenceImage = (width: number, height: number): string => {
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const ctx = canvas.getContext('2d')
-  if (ctx) {
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, width, height)
-  }
-  return canvas.toDataURL('image/png')
-}
-
-// 检查画布是否为空（只有白色背景）
-const isCanvasEmpty = (canvasDataURL: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        resolve(true)
-        return
-      }
-      
-      ctx.drawImage(img, 0, 0)
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      const pixels = imageData.data
-      
-      let nonWhiteCount = 0
-      
-      // Check if all pixels are white (with tolerance for compression artifacts)
-      for (let i = 0; i < pixels.length; i += 4) {
-        const r = pixels[i]
-        const g = pixels[i + 1]
-        const b = pixels[i + 2]
-        const a = pixels[i + 3]
-        
-        // If we find any non-white pixel (with tolerance for compression)
-        // Consider pixels with RGB values < 253 as non-white to handle compression artifacts
-        if (a > 0 && (r < 253 || g < 253 || b < 253)) {
-          nonWhiteCount++
-          if (nonWhiteCount > 100) {  // If more than 100 non-white pixels, it's definitely not empty
-            resolve(false)
-            return
-          }
-        }
-      }
-      
-      // If we found some non-white pixels but less than 100, treat as empty (likely artifacts)
-      resolve(nonWhiteCount === 0 || nonWhiteCount < 100)
-    }
-    img.src = canvasDataURL
-  })
-}
+import { getReferenceImageDataURL } from '@/lib/referenceImages'
+import { AspectRatio } from '@/types'
 
 export default function PromptEditor() {
   const {
@@ -89,72 +33,57 @@ export default function PromptEditor() {
     setIsGenerating(true)
     
     try {
-      // Get canvas data and dimensions
+      // Get canvas data and target dimensions
       const storeState = useAppStore.getState()
-      const { canvasDataURL, canvas: { canvasWidth, canvasHeight, aspectRatio } } = storeState
+      const { canvasDataURL, canvas: { aspectRatio }, targetWidth, targetHeight } = storeState
       
       console.log('Canvas data exists:', !!canvasDataURL)
-      console.log('Canvas dimensions:', canvasWidth, 'x', canvasHeight)
+      console.log('Target dimensions:', targetWidth, 'x', targetHeight, 'for aspect ratio:', aspectRatio)
       
-      // Create aspect ratio reference
-      const aspectRatioReference = createBlankReferenceImage(canvasWidth, canvasHeight)
-      
-      // Prepare reference images array in the format expected by API
+      // 使用预生成的参考图
       const referenceImages: Array<{data: string, type: string, description: string}> = []
+      let fullPrompt = ''
       
-      // Check if canvas has actual content (not just white background)
-      let hasCanvasContent = false
       if (canvasDataURL) {
-        hasCanvasContent = !(await isCanvasEmpty(canvasDataURL))
-        console.log('Canvas has actual content:', hasCanvasContent)
-      }
-      
-      if (hasCanvasContent && canvasDataURL) {
+        // 图1：画布内容
         referenceImages.push({
           data: canvasDataURL,
           type: 'canvas',
-          description: '用户手绘草图'
+          description: 'Content to transform (Figure 1)'
         })
-      }
-      
-      if (uploadedImages.length > 0) {
-        uploadedImages.forEach((img, index) => {
-          referenceImages.push({
-            data: img.preview,
-            type: 'reference',
-            description: `参考图片 ${index + 1}`
-          })
+        
+        // 图2：使用预生成的白底参考图
+        const aspectRatioReference = await getReferenceImageDataURL(aspectRatio as AspectRatio)
+        referenceImages.push({
+          data: aspectRatioReference,
+          type: 'aspect_ratio',
+          description: `Target ${aspectRatio} template (Figure 2)`
         })
-      }
-      
-      // Always add blank reference for aspect ratio
-      referenceImages.push({
-        data: aspectRatioReference,
-        type: 'aspect_ratio',
-        description: `目标比例 ${aspectRatio} (${canvasWidth}x${canvasHeight})`
-      })
-      
-      // Construct prompt based on number of content images
-      let fullPrompt = ''
-      
-      // Count total content images (canvas + uploaded)
-      const contentImageCount = (hasCanvasContent ? 1 : 0) + uploadedImages.length
-      
-      if (contentImageCount === 1) {
-        // Single content image - use Figure 1 and Figure 2 format
-        fullPrompt = `Redraw the content of Figure 1 onto Figure 2, add content to Figure 1 to fit the aspect ratio of Figure 2, completely clear the content of Figure 2, and only retain the aspect ratio of Figure 2. ${localPrompt}`
-      } else if (contentImageCount > 1) {
-        // Multiple content images - use same clear instructions as single image for better aspect ratio control
-        fullPrompt = `Redraw and combine the content from all previous figures onto the last figure. The last figure is a blank canvas - completely clear its content and only retain its ${aspectRatio} aspect ratio. Add or crop content as needed to perfectly fit the aspect ratio of the last figure. ${localPrompt}`
+        
+        // 根据是否有用户输入，使用不同的提示词策略
+        if (localPrompt.trim()) {
+          // 有用户输入时，明确说明要转换内容
+          fullPrompt = `Transform the content of Figure 1 into: ${localPrompt}. Redraw it onto Figure 2, extending the scene to fit the aspect ratio of Figure 2. Completely clear the content of Figure 2 and only retain its aspect ratio.`
+        } else {
+          // 没有用户输入时，只做比例转换
+          fullPrompt = "Redraw the content of Figure 1 onto Figure 2, add content to Figure 1 to fit the aspect ratio of Figure 2, completely clear the content of Figure 2, and only retain the aspect ratio of Figure 2."
+        }
       } else {
-        // No content images, just text-to-image with aspect ratio
-        fullPrompt = `${localPrompt}. Generate the image to fit the aspect ratio shown in the provided blank template (${aspectRatio}).`
+        // 没有画布内容时，使用预生成的白底参考图
+        const aspectRatioReference = await getReferenceImageDataURL(aspectRatio as AspectRatio)
+        referenceImages.push({
+          data: aspectRatioReference,
+          type: 'aspect_ratio',
+          description: `${aspectRatio} aspect ratio template`
+        })
+        
+        fullPrompt = `${localPrompt}. Generate an image to fit the aspect ratio shown in the provided template (${aspectRatio}).`
       }
       
       console.log('Final prompt:', fullPrompt)
       console.log('Number of reference images:', referenceImages.length)
       
-      // Call API
+      // Call API with target dimensions
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
@@ -164,8 +93,8 @@ export default function PromptEditor() {
           prompt: fullPrompt,
           referenceImages: referenceImages,
           dimensions: {
-            width: canvasWidth,
-            height: canvasHeight
+            width: targetWidth,
+            height: targetHeight
           }
         })
       })

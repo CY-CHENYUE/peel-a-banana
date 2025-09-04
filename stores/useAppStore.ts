@@ -47,12 +47,15 @@ interface AppStore {
   
   // Canvas state
   canvas: CanvasState
+  targetWidth: number
+  targetHeight: number
   setCanvasTool: (tool: DrawingTool) => void
   setCanvasColor: (color: string) => void
   setBrushSize: (size: number) => void
   setEraserSize: (size: number) => void
   setAspectRatio: (ratio: AspectRatio) => void
   setCanvasSize: (width: number, height: number) => void
+  setTargetDimensions: (width: number, height: number) => void
   addCanvasLayer: (layer: CanvasLayer) => void
   removeCanvasLayer: (layerId: string) => void
   setActiveLayer: (layerId: string) => void
@@ -70,9 +73,9 @@ interface AppStore {
 
 const initialCanvasState: CanvasState = {
   aspectRatio: '3:4',
-  canvasWidth: 864,
-  canvasHeight: 1184,
-  currentTool: 'brush',
+  canvasWidth: 1000,
+  canvasHeight: 750,
+  currentTool: 'select',
   brushSize: 5,
   currentColor: '#000000',
   eraserSize: 10,
@@ -107,6 +110,8 @@ const useAppStore = create<AppStore>((set, get) => ({
   canvasDataURL: null,
   history: [],
   canvas: initialCanvasState,
+  targetWidth: 864,
+  targetHeight: 1184,
   
   // Image actions
   addUploadedImage: (file, preview) => {
@@ -195,12 +200,15 @@ const useAppStore = create<AppStore>((set, get) => ({
     }
     const { width, height } = dimensions[ratio]
     set((state) => ({
-      canvas: { ...state.canvas, aspectRatio: ratio, canvasWidth: width, canvasHeight: height }
+      canvas: { ...state.canvas, aspectRatio: ratio },
+      targetWidth: width,
+      targetHeight: height
     }))
   },
   setCanvasSize: (width, height) => set((state) => ({
     canvas: { ...state.canvas, canvasWidth: width, canvasHeight: height }
   })),
+  setTargetDimensions: (width, height) => set({ targetWidth: width, targetHeight: height }),
   addCanvasLayer: (layer) => set((state) => ({
     canvas: { ...state.canvas, layers: [...state.canvas.layers, layer] }
   })),
@@ -269,7 +277,9 @@ const useAppStore = create<AppStore>((set, get) => ({
     promptSource: 'ai',
     isGenerating: false,
     generatedImage: null,
-    canvas: initialCanvasState
+    canvas: initialCanvasState,
+    targetWidth: 864,
+    targetHeight: 1184
   }),
   
   fillPromptFromTag: (tag) => {

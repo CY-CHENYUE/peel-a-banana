@@ -13,7 +13,8 @@ import {
   RectangleHorizontal,
   Trash2,
   Download,
-  Palette
+  Palette,
+  MousePointer
 } from 'lucide-react'
 import { ChromePicker } from 'react-color'
 import useAppStore from '@/stores/useAppStore'
@@ -48,6 +49,16 @@ export default function DrawingToolbar() {
     label: string
     onClick?: () => void
   }> = [
+    {
+      id: 'select',
+      icon: MousePointer,
+      label: '选择',
+      onClick: () => {
+        setCanvasTool('select')
+        setShowBrushSize(false)
+        setShowEraserSize(false)
+      }
+    },
     { 
       id: 'brush', 
       icon: Paintbrush, 
@@ -127,17 +138,22 @@ export default function DrawingToolbar() {
       icon: Trash2, 
       label: '清空',
       onClick: () => {
-        const canvas = document.querySelector('canvas') as HTMLCanvasElement
-        const context = canvas?.getContext('2d')
-        if (canvas && context) {
-          context.clearRect(0, 0, canvas.width, canvas.height)
-          context.fillStyle = '#ffffff'
-          context.fillRect(0, 0, canvas.width, canvas.height)
-          
-          // Save the cleared state to store
-          const dataURL = canvas.toDataURL()
-          addToCanvasHistory(dataURL)
-          setCanvasDataURL(dataURL)
+        // Try Konva's clear method first, fallback to native canvas
+        if ((window as any).canvasClear) {
+          (window as any).canvasClear()
+        } else {
+          const canvas = document.querySelector('canvas') as HTMLCanvasElement
+          const context = canvas?.getContext('2d')
+          if (canvas && context) {
+            context.clearRect(0, 0, canvas.width, canvas.height)
+            context.fillStyle = '#ffffff'
+            context.fillRect(0, 0, canvas.width, canvas.height)
+            
+            // Save the cleared state to store
+            const dataURL = canvas.toDataURL()
+            addToCanvasHistory(dataURL)
+            setCanvasDataURL(dataURL)
+          }
         }
       }
     },
@@ -146,13 +162,18 @@ export default function DrawingToolbar() {
       icon: Download, 
       label: '导出',
       onClick: () => {
-        const canvas = document.querySelector('canvas') as HTMLCanvasElement
-        if (canvas) {
-          const dataURL = canvas.toDataURL('image/png')
-          const link = document.createElement('a')
-          link.download = 'peel-a-banana-canvas.png'
-          link.href = dataURL
-          link.click()
+        // Try Konva's export method first, fallback to native canvas
+        if ((window as any).canvasExport) {
+          (window as any).canvasExport()
+        } else {
+          const canvas = document.querySelector('canvas') as HTMLCanvasElement
+          if (canvas) {
+            const dataURL = canvas.toDataURL('image/png')
+            const link = document.createElement('a')
+            link.download = 'peel-a-banana-canvas.png'
+            link.href = dataURL
+            link.click()
+          }
         }
       }
     }
