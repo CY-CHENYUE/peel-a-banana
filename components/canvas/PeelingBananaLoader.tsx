@@ -23,15 +23,15 @@ export default function PeelingBananaLoader() {
       
       {/* 主要内容区 */}
       <div className="relative flex flex-col items-center gap-12">
-        {/* 香蕉圆形轨迹动画 */}
+        {/* 猴子圆形轨迹动画 */}
         <div className="relative w-48 h-48">
           {/* 轨迹圆圈 */}
           <div className="absolute inset-4 rounded-full border-2 border-yellow-200/30" />
           
-          {/* 旋转的香蕉 */}
+          {/* 旋转的猴子 */}
           <div className="absolute inset-0 animate-spin-slow">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="text-6xl animate-wobble">🍌</div>
+              <div className="text-6xl animate-bounce-slow">🐵</div>
             </div>
           </div>
           
@@ -40,11 +40,16 @@ export default function PeelingBananaLoader() {
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-200/20 to-orange-200/20 animate-pulse" />
           </div>
           
-          {/* 轨迹上的装饰点 */}
+          {/* 对称的香蕉 - 4个方向 */}
           <div className="absolute inset-0">
-            <div className="absolute top-1/2 right-0 translate-x-1/2 text-2xl opacity-40 animate-pulse" style={{ animationDelay: '0.25s' }}>🍌</div>
-            <div className="absolute bottom-0 left-1/2 translate-y-1/2 -translate-x-1/2 text-2xl opacity-40 animate-pulse" style={{ animationDelay: '0.5s' }}>🍌</div>
-            <div className="absolute top-1/2 left-0 -translate-x-1/2 text-2xl opacity-40 animate-pulse" style={{ animationDelay: '0.75s' }}>🍌</div>
+            {/* 上 */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl opacity-60 animate-pulse" style={{ animationDelay: '0s' }}>🍌</div>
+            {/* 右 */}
+            <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 text-3xl opacity-60 animate-pulse" style={{ animationDelay: '0.25s' }}>🍌</div>
+            {/* 下 */}
+            <div className="absolute bottom-0 left-1/2 translate-y-1/2 -translate-x-1/2 text-3xl opacity-60 animate-pulse" style={{ animationDelay: '0.5s' }}>🍌</div>
+            {/* 左 */}
+            <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 text-3xl opacity-60 animate-pulse" style={{ animationDelay: '0.75s' }}>🍌</div>
           </div>
         </div>
         

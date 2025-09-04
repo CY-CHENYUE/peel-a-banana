@@ -36,9 +36,11 @@ interface AppStore {
   isGenerating: boolean
   generatedImage: string | null
   canvasDataURL: string | null
+  showCelebration: boolean
   setIsGenerating: (generating: boolean) => void
   setGeneratedImage: (image: string | null) => void
   setCanvasDataURL: (dataURL: string | null) => void
+  setShowCelebration: (show: boolean) => void
   
   // History
   history: HistoryItem[]
@@ -108,6 +110,7 @@ const useAppStore = create<AppStore>((set, get) => ({
   isGenerating: false,
   generatedImage: null,
   canvasDataURL: null,
+  showCelebration: false,
   history: [],
   canvas: initialCanvasState,
   targetWidth: 864,
@@ -169,6 +172,7 @@ const useAppStore = create<AppStore>((set, get) => ({
   setIsGenerating: (generating) => set({ isGenerating: generating }),
   setGeneratedImage: (image) => set({ generatedImage: image }),
   setCanvasDataURL: (dataURL) => set({ canvasDataURL: dataURL }),
+  setShowCelebration: (show) => set({ showCelebration: show }),
   
   // History actions
   addToHistory: (item) => set((state) => ({

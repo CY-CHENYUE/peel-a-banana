@@ -7,6 +7,7 @@ import DrawingToolbar from '@/components/canvas/DrawingToolbar'
 import ImageGallery from '@/components/canvas/ImageGallery'
 import PromptEditor from '@/components/editor/PromptEditor'
 import GeneratedResult from '@/components/GeneratedResult'
+import CelebrationOverlay from '@/components/CelebrationOverlay'
 import useAppStore from '@/stores/useAppStore'
 import { preloadAllReferenceImages } from '@/lib/referenceImages'
 
@@ -102,7 +103,9 @@ const mockTags: Tag[] = [
 
 export default function Home() {
   const { 
-    uploadedImages
+    uploadedImages,
+    showCelebration,
+    setShowCelebration
   } = useAppStore()
 
   // Preload all reference images on component mount
@@ -161,6 +164,12 @@ export default function Home() {
           </div>
         </div>
       </main>
+      
+      {/* 庆祝动画覆盖层 */}
+      <CelebrationOverlay 
+        show={showCelebration} 
+        onComplete={() => setShowCelebration(false)}
+      />
     </div>
   )
 }

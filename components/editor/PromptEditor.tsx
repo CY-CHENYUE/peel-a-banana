@@ -15,6 +15,7 @@ export default function PromptEditor() {
     setCurrentPrompt,
     setIsGenerating,
     setGeneratedImage,
+    setShowCelebration,
     setCurrentPrompt: savePromptToStore
   } = useAppStore()
 
@@ -102,6 +103,7 @@ export default function PromptEditor() {
       
       if (data.imageUrl) {
         setGeneratedImage(data.imageUrl)
+        setShowCelebration(true) // 触发庆祝动画
         console.log('Image generated successfully')
       } else {
         throw new Error('No image URL in response')
