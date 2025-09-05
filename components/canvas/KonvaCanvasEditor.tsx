@@ -67,7 +67,8 @@ const URLImage = ({ image, isSelected, onSelect, onChange }: URLImageProps) => {
             width={image.width}
             height={image.height}
             ref={imageRef}
-            draggable
+            draggable={!image.id.startsWith('history-')}
+            listening={!image.id.startsWith('history-')}
             onClick={onSelect}
             onTap={onSelect}
             onDragEnd={(e) => {
@@ -97,7 +98,7 @@ const URLImage = ({ image, isSelected, onSelect, onChange }: URLImageProps) => {
               })
             }}
           />
-          {isSelected && (
+          {isSelected && !image.id.startsWith('history-') && (
             <Transformer
               ref={trRef}
               boundBoxFunc={(oldBox, newBox) => {
@@ -506,7 +507,15 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
 
           {/* 图片层 */}
           <Layer>
-            {images.map((image) => (
+            {/* 先渲染历史背景图像，再渲染其他图像 */}
+            {images
+              .sort((a, b) => {
+                // 历史图像排在前面（底层）
+                if (a.id.startsWith('history-')) return -1;
+                if (b.id.startsWith('history-')) return 1;
+                return 0;
+              })
+              .map((image) => (
               <URLImage
                 key={image.id}
                 image={image}
