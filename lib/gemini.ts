@@ -72,7 +72,8 @@ export async function analyzeImageAndGenerateTags(imageBase64: string): Promise<
     const tags = data.tags || data.suggestions || []
 
     // Add IDs and ensure all fields are present
-    return tags.map((tag: {category?: string, value?: string}, index: number) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return tags.map((tag: any, index: number) => ({
       id: index + 1,
       category: tag.category || 'fun',
       label: tag.label || '创意效果',
@@ -106,7 +107,7 @@ export async function generateImage(prompt: string, referenceImage?: string): Pr
       response_format: 'b64_json'
     })
 
-    const imageData = response.data[0]?.b64_json
+    const imageData = response.data?.[0]?.b64_json
     if (!imageData) throw new Error('No image generated')
 
     return `data:image/png;base64,${imageData}`

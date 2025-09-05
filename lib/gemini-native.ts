@@ -104,6 +104,7 @@ export async function analyzeImageWithGemini(imageBase64: string): Promise<TagSu
     const tags = parsed.tags || []
 
     // Add IDs and ensure all required fields
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return tags.map((tag: any, index: number) => ({
       id: index + 1,
       category: tag.category || 'fun',

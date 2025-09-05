@@ -225,7 +225,7 @@ ${imageArray.length > 1 ? `特别注意：你收到了${imageArray.length}张图
     const fallbackTags = [
       {
         id: 1,
-        category: 'fun' as const,
+        category: 'creative' as const,
         label: '卡通化',
         emoji: '🎨',
         description: '将您的图片变成卡通风格',
@@ -237,7 +237,7 @@ ${imageArray.length > 1 ? `特别注意：你收到了${imageArray.length}张图
       },
       {
         id: 2,
-        category: 'art' as const,
+        category: 'style' as const,
         label: '油画',
         emoji: '🖼️',
         description: '将您的图片变成油画风格',
