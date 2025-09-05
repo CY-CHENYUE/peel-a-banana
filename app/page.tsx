@@ -9,8 +9,10 @@ import PromptEditor from '@/components/editor/PromptEditor'
 import GeneratedResult from '@/components/GeneratedResult'
 import GeneratedGallery from '@/components/GeneratedGallery'
 import CelebrationOverlay from '@/components/CelebrationOverlay'
+import MobileWarning from '@/components/MobileWarning'
 import useAppStore from '@/stores/useAppStore'
 import { preloadAllReferenceImages } from '@/lib/referenceImages'
+import { useDeviceDetection } from '@/hooks/useDeviceDetection'
 
 // 动态导入 Konva 组件，禁用 SSR
 const KonvaCanvasEditor = dynamic(
@@ -123,6 +125,8 @@ export default function Home() {
     loadHistoryFromStorage
   } = useAppStore()
 
+  const { isMobile, isLoading } = useDeviceDetection()
+
   // Preload all reference images and load history on component mount
   useEffect(() => {
     // 加载参考图片
@@ -139,6 +143,23 @@ export default function Home() {
       console.error('Error loading history:', error)
     })
   }, [])
+
+  // Show loading state while checking device
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl animate-bounce mb-4">🍌</div>
+          <p className="text-gray-600">正在准备香蕉...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show mobile warning if on mobile device
+  if (isMobile) {
+    return <MobileWarning />
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-orange-50 relative overflow-hidden">
