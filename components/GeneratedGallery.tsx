@@ -19,10 +19,10 @@ export default function GeneratedGallery() {
   // 如果没有历史记录，显示占位符
   if (generatedHistory.length === 0) {
     return (
-      <div className="w-full h-40 bg-gradient-to-b from-white to-yellow-50/30 rounded-2xl shadow-2xl border border-yellow-100/50 flex items-center justify-center">
+      <div className="w-full h-24 bg-gradient-to-b from-white to-yellow-50/30 rounded-xl shadow-xl border border-yellow-100/50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-2">🎨</div>
-          <p className="text-sm text-neutral-500">生成的图片将在这里显示</p>
+          <div className="text-2xl mb-1">🎨</div>
+          <p className="text-xs text-neutral-500">生成的图片将在这里显示</p>
         </div>
       </div>
     )
@@ -43,23 +43,23 @@ export default function GeneratedGallery() {
 
   return (
     <>
-      <div className="w-full bg-gradient-to-b from-white to-yellow-50/30 rounded-2xl shadow-2xl border border-yellow-100/50 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-neutral-700">生成历史</h3>
-          <span className="text-xs text-neutral-500">{generatedHistory.length} 张图片</span>
+      <div className="w-full bg-gradient-to-b from-white to-yellow-50/30 rounded-xl shadow-xl border border-yellow-100/50 p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-bold text-neutral-700">生成历史</h3>
+          <span className="text-[10px] text-neutral-500">{generatedHistory.length} 张图片</span>
         </div>
         
         {/* 横向滚动容器 */}
         <div className="relative">
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-yellow-300 scrollbar-track-yellow-100">
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-yellow-300 scrollbar-track-yellow-100">
             {generatedHistory.map((image) => (
               <div
                 key={image.id}
                 className="flex-shrink-0 relative group cursor-pointer"
                 onClick={() => setSelectedImage(image)}
               >
-                {/* 图片缩略图 */}
-                <div className="w-36 h-36 rounded-xl overflow-hidden bg-gradient-to-br from-white to-neutral-50 border-2 border-yellow-200/50 hover:border-yellow-400 transition-all hover:shadow-2xl hover:-translate-y-1 shadow-lg">
+                {/* 图片缩略图 - 更小尺寸 */}
+                <div className="w-24 h-24 rounded-lg overflow-hidden bg-gradient-to-br from-white to-neutral-50 border border-yellow-200/50 hover:border-yellow-400 transition-all hover:shadow-xl shadow-md">
                   <img
                     src={image.url}
                     alt={`Generated ${image.id}`}

@@ -183,21 +183,23 @@ export default function Home() {
         {/* Main Content Area */}
         <div className="flex-1 flex overflow-hidden">
           {/* Canvas Section */}
-          <div className="flex-1 p-4 overflow-auto">
-            <div className="max-w-4xl mx-auto space-y-4">
-              {/* Canvas */}
-              <div className="flex items-center justify-center min-h-[600px]">
+          <div className="flex-1 p-4 overflow-hidden flex flex-col">
+            <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col gap-4">
+              {/* Canvas - 占用大部分空间 */}
+              <div className="flex-1 flex items-center justify-center">
                 <KonvaCanvasEditor />
               </div>
               
-              {/* Generated Images Gallery */}
-              <GeneratedGallery />
+              {/* Generated Images Gallery - 紧凑高度 */}
+              <div className="flex-shrink-0">
+                <GeneratedGallery />
+              </div>
             </div>
           </div>
 
           {/* Right Panel - Upload & Generate */}
-          <div className="w-96 p-8 pl-0 overflow-y-auto">
-            <div className="space-y-6">
+          <div className="w-96 p-8 pl-0 overflow-y-auto flex flex-col">
+            <div className="flex-1 space-y-6">
               {/* Image Upload Card */}
               <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-yellow-100/50 hover:shadow-2xl transition-all duration-300">
                 <ImageGallery />
@@ -210,6 +212,15 @@ export default function Home() {
               
               {/* Generated Result */}
               <GeneratedResult />
+            </div>
+            
+            {/* 底部署名 - 融入右侧面板底部 */}
+            <div className="mt-4 pt-3 border-t border-neutral-100">
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-[10px] text-yellow-600/60 font-medium">Way to AGI</span>
+                <span className="text-[10px] text-yellow-400/40">|</span>
+                <span className="text-[10px] text-neutral-400">CY-CHENYUE</span>
+              </div>
             </div>
           </div>
         </div>
