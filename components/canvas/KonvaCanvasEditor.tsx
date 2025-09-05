@@ -459,16 +459,21 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
         </div>
       )}
 
-      {/* Status Bar - 放在画布内部 */}
+      {/* Status Bar - 放在画布内部，确保不超出边界 */}
       <div 
-        className="absolute flex items-center gap-3 pointer-events-none"
-        style={{ bottom: '10px', left: '10px' }}
+        className="absolute flex items-center gap-3 pointer-events-none overflow-hidden"
+        style={{ 
+          bottom: '10px', 
+          left: '10px', 
+          right: '10px',
+          maxWidth: 'calc(100% - 20px)'
+        }}
       >
-        <span className="text-xs text-neutral-500">
+        <span className="text-xs text-neutral-500 truncate">
           {aspectRatio} ({targetWidth}×{targetHeight})
         </span>
         <span className="text-xs text-neutral-400">·</span>
-        <span className="text-xs text-neutral-500">
+        <span className="text-xs text-neutral-500 truncate">
           {currentTool === 'select' ? '选择模式' : currentTool === 'brush' ? '绘画模式' : '橡皮擦模式'}
         </span>
       </div>

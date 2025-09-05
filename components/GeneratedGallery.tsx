@@ -19,7 +19,7 @@ export default function GeneratedGallery() {
   // 如果没有历史记录，显示占位符
   if (generatedHistory.length === 0) {
     return (
-      <div className="w-[1000px] mx-auto h-40 bg-gradient-to-b from-white to-yellow-50/30 rounded-2xl shadow-2xl border border-yellow-100/50 flex items-center justify-center">
+      <div className="w-full h-40 bg-gradient-to-b from-white to-yellow-50/30 rounded-2xl shadow-2xl border border-yellow-100/50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-2">🎨</div>
           <p className="text-sm text-neutral-500">生成的图片将在这里显示</p>
@@ -43,7 +43,7 @@ export default function GeneratedGallery() {
 
   return (
     <>
-      <div className="w-[1000px] mx-auto bg-gradient-to-b from-white to-yellow-50/30 rounded-2xl shadow-2xl border border-yellow-100/50 p-6">
+      <div className="w-full bg-gradient-to-b from-white to-yellow-50/30 rounded-2xl shadow-2xl border border-yellow-100/50 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-neutral-700">生成历史</h3>
           <span className="text-xs text-neutral-500">{generatedHistory.length} 张图片</span>

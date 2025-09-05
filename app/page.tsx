@@ -163,7 +163,7 @@ export default function Home() {
         <div className="flex-1 flex overflow-hidden">
           {/* Canvas Section */}
           <div className="flex-1 p-4 overflow-auto">
-            <div className="space-y-4">
+            <div className="max-w-4xl mx-auto space-y-4">
               {/* Canvas */}
               <div className="flex items-center justify-center min-h-[600px]">
                 <KonvaCanvasEditor />
