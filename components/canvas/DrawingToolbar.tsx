@@ -88,8 +88,8 @@ export default function DrawingToolbar() {
       label: '撤销',
       onClick: () => {
         // 使用 KonvaCanvasEditor 暴露的撤销方法
-        if ((window as any).canvasUndo) {
-          (window as any).canvasUndo()
+        if ((window as unknown as {canvasUndo?: () => void}).canvasUndo) {
+          (window as unknown as {canvasUndo: () => void}).canvasUndo()
         }
       },
       disabled: !canUndo()
@@ -100,8 +100,8 @@ export default function DrawingToolbar() {
       label: '重做',
       onClick: () => {
         // 使用 KonvaCanvasEditor 暴露的重做方法
-        if ((window as any).canvasRedo) {
-          (window as any).canvasRedo()
+        if ((window as unknown as {canvasRedo?: () => void}).canvasRedo) {
+          (window as unknown as {canvasRedo: () => void}).canvasRedo()
         }
       },
       disabled: !canRedo()

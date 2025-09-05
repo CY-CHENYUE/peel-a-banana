@@ -392,16 +392,23 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
 
   // 将撤销/重做方法暴露给全局
   useEffect(() => {
-    (window as any).canvasUndo = handleUndo;
-    (window as any).canvasRedo = handleRedo;
-    (window as any).canvasClear = clearCanvas;
-    (window as any).canvasExport = exportCanvas;
+    const win = window as unknown as {
+      canvasUndo?: () => void;
+      canvasRedo?: () => void;
+      canvasClear?: () => void;
+      canvasExport?: () => void;
+    };
+    
+    win.canvasUndo = handleUndo;
+    win.canvasRedo = handleRedo;
+    win.canvasClear = clearCanvas;
+    win.canvasExport = exportCanvas;
     
     return () => {
-      delete (window as any).canvasUndo;
-      delete (window as any).canvasRedo;
-      delete (window as any).canvasClear;
-      delete (window as any).canvasExport;
+      delete win.canvasUndo;
+      delete win.canvasRedo;
+      delete win.canvasClear;
+      delete win.canvasExport;
     }
   }, [handleUndo, handleRedo, clearCanvas, exportCanvas])
 
