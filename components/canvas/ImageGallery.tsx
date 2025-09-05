@@ -292,7 +292,10 @@ export default function ImageGallery() {
                         "hover:scale-105 hover:shadow-md",
                         selectedTagId === tag.id
                           ? "bg-yellow-400 text-white font-semibold shadow-md border-yellow-500"
-                          : cn(categoryStyle.bg, categoryStyle.text, categoryStyle.border, "hover:opacity-90")
+                          : cn('bg' in categoryStyle ? categoryStyle.bg : categoryStyle.bgClass, 
+                               'text' in categoryStyle ? categoryStyle.text : categoryStyle.textClass, 
+                               'border' in categoryStyle ? categoryStyle.border : categoryStyle.borderClass, 
+                               "hover:opacity-90")
                       )}
                       title={tag.description}
                     >

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import Header from '@/components/Header'
-import KonvaCanvasEditor from '@/components/canvas/KonvaCanvasEditor'
 import DrawingToolbar from '@/components/canvas/DrawingToolbar'
 import ImageGallery from '@/components/canvas/ImageGallery'
 import PromptEditor from '@/components/editor/PromptEditor'
@@ -11,6 +11,19 @@ import GeneratedGallery from '@/components/GeneratedGallery'
 import CelebrationOverlay from '@/components/CelebrationOverlay'
 import useAppStore from '@/stores/useAppStore'
 import { preloadAllReferenceImages } from '@/lib/referenceImages'
+
+// 动态导入 Konva 组件，禁用 SSR
+const KonvaCanvasEditor = dynamic(
+  () => import('@/components/canvas/KonvaCanvasEditor'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-[600px]">
+        <div className="text-yellow-600">加载画布中...</div>
+      </div>
+    )
+  }
+)
 
 // Mock data for testing (will be replaced by API)
 import { Tag } from '@/types'

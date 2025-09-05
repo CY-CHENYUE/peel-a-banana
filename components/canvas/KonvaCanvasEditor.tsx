@@ -46,10 +46,13 @@ const URLImage = ({ image, isSelected, onSelect, onChange }: URLImageProps) => {
   }, [image.src])
 
   useEffect(() => {
-    if (isSelected && trRef.current) {
+    if (isSelected && trRef.current && imageRef.current) {
       // 附加变换器
       trRef.current.nodes([imageRef.current])
-      trRef.current.getLayer().batchDraw()
+      const layer = trRef.current.getLayer()
+      if (layer) {
+        layer.batchDraw()
+      }
     }
   }, [isSelected])
 
@@ -76,6 +79,8 @@ const URLImage = ({ image, isSelected, onSelect, onChange }: URLImageProps) => {
             }}
             onTransformEnd={(e) => {
               const node = imageRef.current
+              if (!node) return
+              
               const scaleX = node.scaleX()
               const scaleY = node.scaleY()
 
@@ -133,7 +138,7 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
 
   const stageRef = useRef<Konva.Stage>(null)
   const isDrawing = useRef(false)
-  const [lines, setLines] = useState<Array<{tool: string, points: number[]}>>([])
+  const [lines, setLines] = useState<Array<{tool: string, points: number[], color?: string, width?: number}>>([])
   const [images, setImages] = useState<URLImageProps['image'][]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [processedImageIds, setProcessedImageIds] = useState<Set<string>>(new Set())
@@ -202,7 +207,12 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
     if (currentTool !== 'brush' && currentTool !== 'eraser') return
     
     isDrawing.current = true
-    const pos = e.target.getStage().getPointerPosition()
+    const stage = e.target.getStage()
+    if (!stage) return
+    
+    const pos = stage.getPointerPosition()
+    if (!pos) return
+    
     setLines([...lines, { 
       tool: currentTool, 
       points: [pos.x, pos.y],
@@ -216,8 +226,13 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
     if (currentTool !== 'brush' && currentTool !== 'eraser') return
 
     const stage = e.target.getStage()
+    if (!stage) return
+    
     const point = stage.getPointerPosition()
+    if (!point) return
+    
     const lastLine = lines[lines.length - 1]
+    if (!lastLine) return
     
     // 添加点到最后一条线
     lastLine.points = lastLine.points.concat([point.x, point.y])

@@ -338,7 +338,6 @@ export default function DrawingToolbar() {
                     color={currentColor}
                     onChange={(color) => setCanvasColor(color.hex)}
                     disableAlpha
-                    width="180px"
                   />
                 </div>
                 

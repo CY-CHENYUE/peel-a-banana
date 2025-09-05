@@ -55,7 +55,9 @@ export default function PromptEditor() {
         })
         
         // 图2：使用预生成的白底参考图
-        const aspectRatioReference = await getReferenceImageDataURL(aspectRatio as AspectRatio)
+        const aspectRatioReference = aspectRatio === 'custom' 
+          ? await getReferenceImageDataURL('1:1') // custom时使用1:1作为默认
+          : await getReferenceImageDataURL(aspectRatio as any)
         referenceImages.push({
           data: aspectRatioReference,
           type: 'aspect_ratio',
@@ -66,7 +68,9 @@ export default function PromptEditor() {
         fullPrompt = `Generate a full-frame image that fills the entire canvas without any white borders or margins. Transform the content of Figure 1 into: ${localPrompt}. Redraw it onto Figure 2, extending the scene edge-to-edge to completely fill the aspect ratio of Figure 2. The generated image must cover 100% of the canvas area with no empty spaces. Completely clear the content of Figure 2 and only retain its aspect ratio.`
       } else {
         // 没有画布内容时，使用预生成的白底参考图
-        const aspectRatioReference = await getReferenceImageDataURL(aspectRatio as AspectRatio)
+        const aspectRatioReference = aspectRatio === 'custom'
+          ? await getReferenceImageDataURL('1:1') // custom时使用1:1作为默认
+          : await getReferenceImageDataURL(aspectRatio as any)
         referenceImages.push({
           data: aspectRatioReference,
           type: 'aspect_ratio',
