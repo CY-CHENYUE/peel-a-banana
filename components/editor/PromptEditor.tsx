@@ -123,12 +123,6 @@ export default function PromptEditor() {
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <h3 className="text-sm font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">创作提示词</h3>
-        <span className={cn(
-          "text-xs px-2 py-0.5 rounded-full font-medium",
-          localPrompt.length > 400 ? "bg-orange-100 text-orange-700" : "bg-yellow-100 text-yellow-700"
-        )}>
-          {localPrompt.length}/500
-        </span>
       </div>
 
       {/* Prompt Input */}
@@ -144,7 +138,6 @@ export default function PromptEditor() {
             "text-sm text-neutral-700 placeholder-neutral-500",
             "resize-none transition-all duration-200"
           )}
-          maxLength={500}
         />
         
         {/* Magic Wand Button */}
@@ -154,27 +147,6 @@ export default function PromptEditor() {
         >
           <Wand2 className="w-4 h-4 text-white" />
         </button>
-      </div>
-
-      {/* Quick Templates */}
-      <div className="flex flex-wrap gap-2">
-        {['写实风格', '卡通风格', '油画风格', '赛博朋克'].map((style) => (
-          <button
-            key={style}
-            onClick={() => {
-              const stylePrompts = {
-                '写实风格': 'photorealistic, highly detailed, professional photography',
-                '卡通风格': 'cartoon style, animated, colorful, cute',
-                '油画风格': 'oil painting style, artistic, textured brushstrokes',
-                '赛博朋克': 'cyberpunk style, neon lights, futuristic, high-tech'
-              }
-              setLocalPrompt(prev => prev + (prev ? ', ' : '') + stylePrompts[style as keyof typeof stylePrompts])
-            }}
-            className="px-3 py-1.5 text-xs bg-gradient-to-r from-yellow-100 to-orange-100 hover:from-yellow-200 hover:to-orange-200 rounded-lg transition-all hover:shadow-md transform hover:scale-105 font-medium text-neutral-700"
-          >
-            {style}
-          </button>
-        ))}
       </div>
 
       {/* Generate Button */}

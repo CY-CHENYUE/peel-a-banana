@@ -349,15 +349,6 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
         className
       )}
     >
-      {/* Canvas Size Badge - Shows aspect ratio and target dimensions */}
-      <div className="absolute top-4 left-4 z-10">
-        <div className="px-4 py-2 bg-gradient-to-r from-yellow-400/90 to-orange-400/90 backdrop-blur-sm rounded-full shadow-lg border border-yellow-300/50">
-          <span className="text-xs font-semibold text-white">
-            {aspectRatio} ({targetWidth} × {targetHeight})
-          </span>
-        </div>
-      </div>
-
       {/* Konva Stage - Fixed size */}
       <div 
         className="bg-white rounded-xl shadow-2xl overflow-hidden inline-block"
@@ -432,13 +423,18 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
         </div>
       )}
 
-      {/* Keyboard Shortcuts Hint */}
-      <div className="absolute bottom-4 left-4">
-        <div className="px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-lg border border-yellow-100/50 shadow-sm">
-          <span className="text-xs text-neutral-600 font-medium">
-            Delete 删除图片 · {currentTool === 'select' ? '选择模式' : currentTool === 'brush' ? '绘画模式' : '橡皮擦模式'}
-          </span>
-        </div>
+      {/* Status Bar - 放在画布内部 */}
+      <div 
+        className="absolute flex items-center gap-3 pointer-events-none"
+        style={{ bottom: '10px', left: '10px' }}
+      >
+        <span className="text-xs text-neutral-500">
+          {aspectRatio} ({targetWidth}×{targetHeight})
+        </span>
+        <span className="text-xs text-neutral-400">·</span>
+        <span className="text-xs text-neutral-500">
+          {currentTool === 'select' ? '选择模式' : currentTool === 'brush' ? '绘画模式' : '橡皮擦模式'}
+        </span>
       </div>
     </div>
   )
