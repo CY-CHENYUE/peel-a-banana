@@ -87,21 +87,9 @@ export default function DrawingToolbar() {
       icon: Undo2, 
       label: '撤销',
       onClick: () => {
-        if (canUndo()) {
-          const newIndex = historyIndex - 1
-          undoCanvas()
-          const canvas = document.querySelector('canvas') as HTMLCanvasElement
-          const context = canvas?.getContext('2d')
-          if (canvas && context && history[newIndex]) {
-            const img = new Image()
-            img.onload = () => {
-              context.clearRect(0, 0, canvas.width, canvas.height)
-              context.fillStyle = '#ffffff'
-              context.fillRect(0, 0, canvas.width, canvas.height)
-              context.drawImage(img, 0, 0)
-            }
-            img.src = history[newIndex]
-          }
+        // 使用 KonvaCanvasEditor 暴露的撤销方法
+        if ((window as any).canvasUndo) {
+          (window as any).canvasUndo()
         }
       },
       disabled: !canUndo()
@@ -111,21 +99,9 @@ export default function DrawingToolbar() {
       icon: Redo2, 
       label: '重做',
       onClick: () => {
-        if (canRedo()) {
-          const newIndex = historyIndex + 1
-          redoCanvas()
-          const canvas = document.querySelector('canvas') as HTMLCanvasElement
-          const context = canvas?.getContext('2d')
-          if (canvas && context && history[newIndex]) {
-            const img = new Image()
-            img.onload = () => {
-              context.clearRect(0, 0, canvas.width, canvas.height)
-              context.fillStyle = '#ffffff'
-              context.fillRect(0, 0, canvas.width, canvas.height)
-              context.drawImage(img, 0, 0)
-            }
-            img.src = history[newIndex]
-          }
+        // 使用 KonvaCanvasEditor 暴露的重做方法
+        if ((window as any).canvasRedo) {
+          (window as any).canvasRedo()
         }
       },
       disabled: !canRedo()

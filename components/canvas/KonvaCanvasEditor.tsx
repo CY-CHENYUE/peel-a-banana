@@ -125,6 +125,8 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
       currentColor,
       eraserSize,
       aspectRatio,
+      history,
+      historyIndex,
     },
     targetWidth,
     targetHeight,
@@ -134,6 +136,10 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
     generatedImage,
     setGeneratedImage,
     isGenerating,
+    canUndo,
+    canRedo,
+    undoCanvas,
+    redoCanvas,
   } = useAppStore()
 
   const stageRef = useRef<Konva.Stage>(null)
@@ -315,6 +321,89 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
     link.href = dataURL
     link.click()
   }, [])
+
+  // 处理撤销
+  const handleUndo = useCallback(() => {
+    if (canUndo()) {
+      const targetIndex = historyIndex - 1
+      if (targetIndex >= 0 && history[targetIndex]) {
+        // 从历史记录恢复画布状态
+        const img = new Image()
+        img.onload = () => {
+          // 清空当前内容
+          setLines([])
+          setImages([])
+          
+          // 创建背景图像来显示历史状态
+          const backgroundImage = {
+            id: 'history-' + targetIndex,
+            src: history[targetIndex],
+            x: 0,
+            y: 0,
+            width: canvasWidth,
+            height: canvasHeight
+          }
+          setImages([backgroundImage])
+          
+          // 更新历史索引
+          undoCanvas()
+          
+          // 更新 store 中的画布数据
+          setCanvasDataURL(history[targetIndex])
+        }
+        img.src = history[targetIndex]
+      }
+    }
+  }, [canUndo, undoCanvas, history, historyIndex, canvasWidth, canvasHeight, setCanvasDataURL])
+
+  // 处理重做
+  const handleRedo = useCallback(() => {
+    if (canRedo()) {
+      const targetIndex = historyIndex + 1
+      if (targetIndex < history.length && history[targetIndex]) {
+        // 从历史记录恢复画布状态
+        const img = new Image()
+        img.onload = () => {
+          // 清空当前内容
+          setLines([])
+          setImages([])
+          
+          // 创建背景图像来显示历史状态
+          const backgroundImage = {
+            id: 'history-' + targetIndex,
+            src: history[targetIndex],
+            x: 0,
+            y: 0,
+            width: canvasWidth,
+            height: canvasHeight
+          }
+          setImages([backgroundImage])
+          
+          // 更新历史索引
+          redoCanvas()
+          
+          // 更新 store 中的画布数据
+          setCanvasDataURL(history[targetIndex])
+        }
+        img.src = history[targetIndex]
+      }
+    }
+  }, [canRedo, redoCanvas, history, historyIndex, canvasWidth, canvasHeight, setCanvasDataURL])
+
+  // 将撤销/重做方法暴露给全局
+  useEffect(() => {
+    (window as any).canvasUndo = handleUndo;
+    (window as any).canvasRedo = handleRedo;
+    (window as any).canvasClear = clearCanvas;
+    (window as any).canvasExport = exportCanvas;
+    
+    return () => {
+      delete (window as any).canvasUndo;
+      delete (window as any).canvasRedo;
+      delete (window as any).canvasClear;
+      delete (window as any).canvasExport;
+    }
+  }, [handleUndo, handleRedo, clearCanvas, exportCanvas])
 
   // 处理生成的图片
   useEffect(() => {
