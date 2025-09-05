@@ -1,7 +1,7 @@
 'use client'
 
-import { Upload, X, ImageIcon, Sparkles, RefreshCw, AlertCircle, Palette, MapPin, Sun, Puzzle, User, Wand2, Clock, Lightbulb } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { Upload, X, Plus, Check, Sparkles, RefreshCw, AlertCircle, Palette, MapPin, Sun, Puzzle, User, Wand2, Clock, Lightbulb } from 'lucide-react'
+import { useCallback, useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import useAppStore from '@/stores/useAppStore'
 import { cn } from '@/lib/utils'
@@ -51,6 +51,31 @@ export default function ImageGallery() {
   
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
+  const [canvasImages, setCanvasImages] = useState<Set<string>>(new Set())
+  
+  // 定期检查画布上的图片状态
+  useEffect(() => {
+    const checkCanvasImages = () => {
+      const win = window as unknown as { canvasHasImage?: (imageId: string) => boolean }
+      if (win.canvasHasImage) {
+        const newCanvasImages = new Set<string>()
+        uploadedImages.forEach(img => {
+          if (win.canvasHasImage!(img.id)) {
+            newCanvasImages.add(img.id)
+          }
+        })
+        setCanvasImages(newCanvasImages)
+      }
+    }
+    
+    // 初始检查
+    checkCanvasImages()
+    
+    // 设置定时器定期检查
+    const interval = setInterval(checkCanvasImages, 500)
+    
+    return () => clearInterval(interval)
+  }, [uploadedImages])
 
   // Analyze all uploaded images
   const analyzeImages = async () => {
@@ -132,7 +157,7 @@ export default function ImageGallery() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
-        <h3 className="text-sm font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">参考图片</h3>
+        <h3 className="text-sm font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">素材库</h3>
         <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full font-medium">
           {uploadedImages.length}/5
         </span>
@@ -176,30 +201,65 @@ export default function ImageGallery() {
         <>
           {/* Uploaded Images Grid */}
           <div className="grid grid-cols-3 gap-2">
-            {uploadedImages.map((img) => (
-              <div
-                key={img.id}
-                className="relative group rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all transform hover:scale-105"
-              >
-                <img
-                  src={img.preview}
-                  alt="Uploaded"
-                  className="w-full h-20 object-cover"
-                />
-                
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                
-                {/* Remove Button */}
-                <button
-                  onClick={() => removeUploadedImage(img.id)}
-                  className="absolute top-1 right-1 p-1 bg-white/90 backdrop-blur-sm rounded opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50"
+            {uploadedImages.map((img) => {
+              const isOnCanvas = canvasImages.has(img.id)
+              
+              return (
+                <div
+                  key={img.id}
+                  className={cn(
+                    "relative group rounded-lg overflow-hidden shadow-md transition-all transform",
+                    isOnCanvas 
+                      ? "hover:shadow-lg cursor-default" 
+                      : "hover:shadow-xl hover:scale-105 cursor-pointer"
+                  )}
+                  onClick={() => {
+                    // 只有不在画布上的图片才能添加
+                    if (!isOnCanvas) {
+                      const win = window as unknown as { canvasAddImage?: (img: { id: string; preview: string }) => boolean }
+                      if (win.canvasAddImage) {
+                        win.canvasAddImage(img)
+                      }
+                    }
+                  }}
+                  title={isOnCanvas ? "图片已在画布上" : "点击添加到画布"}
                 >
-                  <X className="w-3 h-3 text-neutral-600 hover:text-red-500" />
-                </button>
+                  <img
+                    src={img.preview}
+                    alt="Uploaded"
+                    className={cn(
+                      "w-full h-20 object-cover",
+                      isOnCanvas && "opacity-75"
+                    )}
+                  />
+                  
+                  {/* Overlay with Icon */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    {isOnCanvas ? (
+                      <div className="bg-gray-500/90 rounded-full p-2.5 shadow-lg">
+                        <Check className="w-5 h-5 text-white" />
+                      </div>
+                    ) : (
+                      <div className="bg-white/90 rounded-full p-2.5 shadow-lg">
+                        <Plus className="w-5 h-5 text-yellow-600" />
+                      </div>
+                    )}
+                  </div>
                 
-              </div>
-            ))}
+                  
+                  {/* Remove Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation() // 阻止触发添加到画布
+                      removeUploadedImage(img.id)
+                    }}
+                    className="absolute top-1 right-1 p-1 bg-white/90 backdrop-blur-sm rounded opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 z-10"
+                  >
+                    <X className="w-3 h-3 text-neutral-600 hover:text-red-500" />
+                  </button>
+                </div>
+              )
+            })}
             
             {/* Add More Card */}
             {uploadedImages.length < 5 && (
@@ -225,16 +285,9 @@ export default function ImageGallery() {
         </>
       )}
 
-      {/* Tips & Analysis */}
+      {/* Analysis */}
       {uploadedImages.length > 0 && (
         <>
-          <div className="flex items-start gap-2 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200/50">
-            <ImageIcon className="w-4 h-4 text-orange-500 mt-0.5" />
-            <p className="text-xs font-medium text-orange-700">
-              上传的图片将作为AI生成的参考
-            </p>
-          </div>
-          
           {/* Analysis Section */}
           {!isAnalyzing && analyzedTags.length === 0 && (
             <button

@@ -535,21 +535,87 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
     }
   }, [generatedImage, canvasWidth, canvasHeight, targetWidth, targetHeight, setGeneratedImage, saveCanvasState])
 
+  // 手动添加图片到画布的方法
+  const addImageToCanvas = useCallback((uploadedImg: { id: string; preview: string }) => {
+    // 检查是否已存在
+    if (images.some(img => img.id === uploadedImg.id)) {
+      console.log('Image already on canvas:', uploadedImg.id)
+      return false
+    }
+    
+    // 创建 Image 对象以获取原始尺寸
+    const img = new Image()
+    img.src = uploadedImg.preview
+    img.onload = () => {
+      // 计算等比例缩放的尺寸
+      const maxSize = 200
+      const ratio = img.width / img.height
+      let width, height
+      
+      if (ratio > 1) {
+        width = maxSize
+        height = maxSize / ratio
+      } else {
+        height = maxSize
+        width = maxSize * ratio
+      }
+      
+      // 计算位置（稍微随机一些，避免完全重叠）
+      const randomOffset = Math.random() * 50
+      const baseX = 50 + randomOffset
+      const baseY = 50 + randomOffset
+      
+      const newImage = {
+        id: uploadedImg.id,
+        src: uploadedImg.preview,
+        x: Math.min(baseX, canvasWidth - width - 50),
+        y: Math.min(baseY, canvasHeight - height - 50),
+        width: width,
+        height: height,
+      }
+      
+      setImages(prev => [...prev, newImage])
+      setProcessedImageIds(prev => new Set(prev).add(uploadedImg.id))
+      
+      // 保存状态
+      setTimeout(() => {
+        if (stageRef.current) {
+          const dataURL = stageRef.current.toDataURL()
+          setCanvasDataURL(dataURL)
+          addToCanvasHistory(dataURL)
+        }
+      }, 100)
+    }
+    
+    return true
+  }, [images, canvasWidth, canvasHeight, setCanvasDataURL, addToCanvasHistory])
+
+  // 检查图片是否已在画布上
+  const isImageOnCanvas = useCallback((imageId: string) => {
+    return images.some(img => img.id === imageId)
+  }, [images])
+
   // 暴露方法给父组件（用于工具栏）
   useEffect(() => {
     // 将清空和导出功能绑定到window对象（临时方案）
     const win = window as unknown as {
       canvasClear?: () => void
       canvasExport?: () => void
+      canvasAddImage?: (img: { id: string; preview: string }) => boolean
+      canvasHasImage?: (imageId: string) => boolean
     }
     win.canvasClear = clearCanvas
     win.canvasExport = exportCanvas
+    win.canvasAddImage = addImageToCanvas
+    win.canvasHasImage = isImageOnCanvas
     
     return () => {
       delete win.canvasClear
       delete win.canvasExport
+      delete win.canvasAddImage
+      delete win.canvasHasImage
     }
-  }, [clearCanvas, exportCanvas])
+  }, [clearCanvas, exportCanvas, addImageToCanvas, isImageOnCanvas])
 
   // 点击舞台空白处取消选择
   const checkDeselect = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
