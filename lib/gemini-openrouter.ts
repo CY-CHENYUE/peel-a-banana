@@ -1,7 +1,7 @@
 // OpenRouter implementation for Gemini image analysis
 export interface TagSuggestion {
   id: number
-  category: 'character' | 'fun' | 'scene' | 'art' | 'effect'
+  category: 'style' | 'scene' | 'mood' | 'element' | 'character' | 'effect' | 'time' | 'creative'
   label: string
   emoji: string
   description: string
@@ -92,14 +92,29 @@ export async function analyzeImageWithOpenRouter(images: string | string[]): Pro
           content: [
             {
               type: 'text',
-              text: `分析${imageArray.length > 1 ? '这些图片' : '这张图片'}，为用户生成6个有趣的AI图片编辑创意。
+              text: `分析${imageArray.length > 1 ? '这些图片' : '这张图片'}，理解其内容、构图和特点。
 
-首先简要描述你看到的内容。
+首先简要描述你看到的内容（1-2句话）。
 
-然后生成6个创意编辑方案，每个方案用以下格式：
+然后根据图片的实际内容和特征，从以下编辑方向中选择最合适的3-6个来生成创意建议：
+- style (风格转换): 适合转换为不同的艺术风格或画风
+- scene (场景变换): 适合更换背景或环境
+- mood (氛围调整): 适合调整色彩、光线或情绪氛围  
+- element (元素编辑): 适合添加、移除或修改特定元素
+- character (人物变化): 适合改变人物造型、服装或表情（如果有人物）
+- effect (特效处理): 适合添加视觉特效或滤镜
+- time (时空转换): 适合改变时间、季节或年代
+- creative (创意融合): 适合超现实或艺术性的创意改造
+
+重要提示：
+1. 只选择真正适合这张图片的编辑方向，不要强行生成不合适的建议
+2. 每个建议要充分发挥该分类的特点，具有可执行性
+3. 生成3-6个建议即可，质量比数量更重要
+
+每个创意方案用以下格式：
 
 标签#N:
-类别: character/fun/scene/art/effect之一
+类别: style/scene/mood/element/character/effect/time/creative之一
 名称: 2-4个中文字
 表情: 一个emoji
 描述: 基于图片内容的创意描述

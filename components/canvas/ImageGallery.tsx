@@ -1,10 +1,41 @@
 'use client'
 
-import { Upload, X, ImageIcon, Sparkles, RefreshCw, AlertCircle } from 'lucide-react'
+import { Upload, X, ImageIcon, Sparkles, RefreshCw, AlertCircle, Palette, MapPin, Sun, Puzzle, User, Wand2, Clock, Lightbulb } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import useAppStore from '@/stores/useAppStore'
 import { cn } from '@/lib/utils'
+
+// 分类配置
+const categoryConfig = {
+  style: { icon: Palette, color: 'purple', label: '风格' },
+  scene: { icon: MapPin, color: 'blue', label: '场景' },
+  mood: { icon: Sun, color: 'yellow', label: '氛围' },
+  element: { icon: Puzzle, color: 'green', label: '元素' },
+  character: { icon: User, color: 'pink', label: '人物' },
+  effect: { icon: Wand2, color: 'indigo', label: '特效' },
+  time: { icon: Clock, color: 'orange', label: '时空' },
+  creative: { icon: Lightbulb, color: 'red', label: '创意' }
+}
+
+// 获取分类样式
+const getCategoryStyle = (category: string) => {
+  const config = categoryConfig[category as keyof typeof categoryConfig]
+  if (!config) return { bgClass: 'bg-neutral-100', textClass: 'text-neutral-600', borderClass: 'border-neutral-200' }
+  
+  const colorMap = {
+    purple: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200' },
+    blue: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
+    yellow: { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-200' },
+    green: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
+    pink: { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-200' },
+    indigo: { bg: 'bg-indigo-100', text: 'text-indigo-700', border: 'border-indigo-200' },
+    orange: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
+    red: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' }
+  }
+  
+  return colorMap[config.color as keyof typeof colorMap] || { bg: 'bg-neutral-100', text: 'text-neutral-600', border: 'border-neutral-200' }
+}
 
 export default function ImageGallery() {
   const { 
@@ -236,31 +267,46 @@ export default function ImageGallery() {
                   <RefreshCw className="w-3 h-3 text-neutral-500 hover:text-blue-500" />
                 </button>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {analyzedTags.slice(0, 6).map(tag => (
-                  <button
-                    key={tag.id}
-                    onClick={() => {
-                      if (selectedTagId === tag.id) {
-                        // 取消选择
-                        selectAnalyzedTag(null)
-                        setCurrentPrompt('')
-                      } else {
-                        // 选择新标签并填充提示词
-                        selectAnalyzedTag(tag.id)
-                        setCurrentPrompt(tag.prompt)
-                      }
-                    }}
-                    className={cn(
-                      "px-2 py-1 text-[10px] rounded-full transition-all",
-                      selectedTagId === tag.id
-                        ? "bg-yellow-400 text-white font-semibold shadow-md"
-                        : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-                    )}
-                  >
-                    {tag.emoji} {tag.label}
-                  </button>
-                ))}
+              <div className="flex flex-wrap gap-1.5">
+                {analyzedTags.map(tag => {
+                  const categoryInfo = categoryConfig[tag.category as keyof typeof categoryConfig]
+                  const categoryStyle = getCategoryStyle(tag.category)
+                  const Icon = categoryInfo?.icon
+                  
+                  return (
+                    <button
+                      key={tag.id}
+                      onClick={() => {
+                        if (selectedTagId === tag.id) {
+                          // 取消选择
+                          selectAnalyzedTag(null)
+                          setCurrentPrompt('')
+                        } else {
+                          // 选择新标签并填充提示词
+                          selectAnalyzedTag(tag.id)
+                          setCurrentPrompt(tag.prompt)
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center gap-1 px-2.5 py-1.5 text-[10px] rounded-lg transition-all border",
+                        "hover:scale-105 hover:shadow-md",
+                        selectedTagId === tag.id
+                          ? "bg-yellow-400 text-white font-semibold shadow-md border-yellow-500"
+                          : cn(categoryStyle.bg, categoryStyle.text, categoryStyle.border, "hover:opacity-90")
+                      )}
+                      title={tag.description}
+                    >
+                      {Icon && <Icon className="w-3 h-3" />}
+                      {tag.emoji} 
+                      <span className="font-medium">{tag.label}</span>
+                      {categoryInfo && (
+                        <span className="text-[8px] opacity-75 ml-1">
+                          {categoryInfo.label}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
