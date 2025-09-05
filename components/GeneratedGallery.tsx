@@ -108,14 +108,14 @@ export default function GeneratedGallery() {
       {/* 大图查看器 */}
       {selectedImage && (
         <div 
-          className="fixed inset-0 z-[9998] bg-black/80 flex items-center justify-center p-8"
+          className="fixed inset-0 z-[9998] bg-black/80 flex items-center justify-center p-4"
           onClick={() => setSelectedImage(null)}
         >
-          <div className="relative max-w-4xl max-h-full">
+          <div className="relative w-full h-full flex items-center justify-center">
             <img
               src={selectedImage.url}
               alt="Generated"
-              className="max-w-full max-h-full object-contain rounded-lg"
+              className="max-w-[90vw] max-h-[90vh] w-auto h-auto object-contain rounded-lg"
             />
             
             {/* 关闭按钮 */}
@@ -134,10 +134,10 @@ export default function GeneratedGallery() {
               <Download className="w-6 h-6 text-white" />
             </button>
             
-            {/* 提示词显示 */}
+            {/* 提示词显示 - 移到图片外部底部 */}
             {selectedImage.prompt && (
-              <div className="absolute bottom-4 left-4 right-20 p-3 bg-white/90 backdrop-blur-sm rounded-lg">
-                <p className="text-sm text-neutral-700 line-clamp-2">{selectedImage.prompt}</p>
+              <div className="absolute bottom-4 left-[5vw] right-[5vw] max-w-[90vw] p-3 bg-white/90 backdrop-blur-sm rounded-lg" style={{ top: 'auto', bottom: '20px' }}>
+                <p className="text-xs text-neutral-700 line-clamp-2 text-center">{selectedImage.prompt}</p>
               </div>
             )}
           </div>

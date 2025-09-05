@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { Tag, HistoryItem, PromptSource, CanvasState, DrawingTool, AspectRatio, CanvasLayer } from '@/types'
+import { storage } from '@/lib/storage'
 
 interface AppStore {
   // Image state
@@ -75,6 +76,7 @@ interface AppStore {
   // Actions
   reset: () => void
   fillPromptFromTag: (tag: Tag) => void
+  loadHistoryFromStorage: () => Promise<void>
 }
 
 const initialCanvasState: CanvasState = {
@@ -179,20 +181,35 @@ const useAppStore = create<AppStore>((set, get) => ({
   setCanvasDataURL: (dataURL) => set({ canvasDataURL: dataURL }),
   setShowCelebration: (show) => set({ showCelebration: show }),
   
-  addToGeneratedHistory: (url, prompt) => set((state) => ({
-    generatedHistory: [{ 
-      id: Date.now().toString(), 
-      url, 
-      prompt, 
-      timestamp: Date.now() 
-    }, ...state.generatedHistory].slice(0, 50) // Keep last 50 images
-  })),
+  addToGeneratedHistory: async (url, prompt) => {
+    const record = storage.createImageRecord(url, prompt)
+    
+    // 保存到存储服务
+    await storage.saveImage(record)
+    
+    // 更新 store
+    set((state) => ({
+      generatedHistory: [record, ...state.generatedHistory].slice(0, 50) // Keep last 50 images
+    }))
+  },
   
-  removeFromHistory: (id) => set((state) => ({
-    generatedHistory: state.generatedHistory.filter(img => img.id !== id)
-  })),
+  removeFromHistory: async (id) => {
+    // 从存储服务删除
+    await storage.deleteImage(id)
+    
+    // 更新 store
+    set((state) => ({
+      generatedHistory: state.generatedHistory.filter(img => img.id !== id)
+    }))
+  },
   
-  clearGeneratedHistory: () => set({ generatedHistory: [] }),
+  clearGeneratedHistory: async () => {
+    // 清空存储服务
+    await storage.clearAll()
+    
+    // 清空 store
+    set({ generatedHistory: [] })
+  },
   
   // History actions
   addToHistory: (item) => set((state) => ({
@@ -313,6 +330,16 @@ const useAppStore = create<AppStore>((set, get) => ({
       originalPrompt: tag.prompt,
       promptSource: 'ai'
     })
+  },
+  
+  // 从存储加载历史记录
+  loadHistoryFromStorage: async () => {
+    try {
+      const images = await storage.getImages()
+      set({ generatedHistory: images })
+    } catch (error) {
+      console.error('Failed to load history from storage:', error)
+    }
   }
 }))
 

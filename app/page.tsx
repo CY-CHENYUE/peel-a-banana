@@ -106,15 +106,24 @@ export default function Home() {
   const { 
     uploadedImages,
     showCelebration,
-    setShowCelebration
+    setShowCelebration,
+    loadHistoryFromStorage
   } = useAppStore()
 
-  // Preload all reference images on component mount
+  // Preload all reference images and load history on component mount
   useEffect(() => {
+    // 加载参考图片
     preloadAllReferenceImages().then(() => {
       console.log('All reference images preloaded successfully')
     }).catch(error => {
       console.error('Error preloading reference images:', error)
+    })
+    
+    // 从存储加载历史记录
+    loadHistoryFromStorage().then(() => {
+      console.log('History loaded from storage')
+    }).catch(error => {
+      console.error('Error loading history:', error)
     })
   }, [])
 
