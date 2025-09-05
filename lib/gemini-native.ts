@@ -104,7 +104,7 @@ export async function analyzeImageWithGemini(imageBase64: string): Promise<TagSu
     const tags = parsed.tags || []
 
     // Add IDs and ensure all required fields
-    return tags.map((tag: {category?: string, value?: string}, index: number) => ({
+    return tags.map((tag: any, index: number) => ({
       id: index + 1,
       category: tag.category || 'fun',
       label: tag.label || '创意效果',

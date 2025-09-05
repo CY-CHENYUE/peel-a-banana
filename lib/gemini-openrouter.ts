@@ -29,6 +29,9 @@ interface ParsedTag {
   label?: string
   emoji?: string
   value?: string
+  description?: string
+  prompt?: string
+  keywords?: string[]
 }
 
 // Parse structured text response into tags
