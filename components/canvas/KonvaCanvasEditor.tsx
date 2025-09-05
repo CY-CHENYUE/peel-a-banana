@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Stage, Layer, Line, Rect, Image as KImage, Transformer } from 'react-konva'
+import { Stage, Layer, Line, Rect, Image as KImage, Transformer, Group, Circle, Text } from 'react-konva'
 import Konva from 'konva'
 import useAppStore from '@/stores/useAppStore'
 import { cn } from '@/lib/utils'
@@ -26,11 +26,13 @@ interface URLImageProps {
   isSelected: boolean
   onSelect: () => void
   onChange: (newAttrs: URLImageProps['image']) => void
+  onDelete?: () => void
 }
 
 // 单独的图片组件，用于处理图片加载和变换
-const URLImage = ({ image, isSelected, onSelect, onChange }: URLImageProps) => {
+const URLImage = ({ image, isSelected, onSelect, onChange, onDelete }: URLImageProps) => {
   const [img, setImg] = useState<HTMLImageElement | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const imageRef = useRef<Konva.Image>(null)
   const trRef = useRef<Konva.Transformer>(null)
 
@@ -71,7 +73,11 @@ const URLImage = ({ image, isSelected, onSelect, onChange }: URLImageProps) => {
             listening={!image.id.startsWith('history-')}
             onClick={onSelect}
             onTap={onSelect}
+            onDragStart={() => {
+              setIsDragging(true)
+            }}
             onDragEnd={(e) => {
+              setIsDragging(false)
               onChange({
                 ...image,
                 x: e.target.x(),
@@ -99,16 +105,69 @@ const URLImage = ({ image, isSelected, onSelect, onChange }: URLImageProps) => {
             }}
           />
           {isSelected && !image.id.startsWith('history-') && (
-            <Transformer
-              ref={trRef}
-              boundBoxFunc={(oldBox, newBox) => {
-                // 限制最小尺寸
-                if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {
-                  return oldBox
-                }
-                return newBox
-              }}
-            />
+            <>
+              <Transformer
+                ref={trRef}
+                boundBoxFunc={(oldBox, newBox) => {
+                  // 限制最小尺寸
+                  if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {
+                    return oldBox
+                  }
+                  return newBox
+                }}
+              />
+              {/* 删除按钮 - 只在选中且不拖动时显示 */}
+              {onDelete && !isDragging && (
+                <Group
+                  x={image.x + (image.width || 100) - 10}
+                  y={image.y - 10}
+                  onClick={(e) => {
+                    e.cancelBubble = true // 阻止事件冒泡
+                    onDelete()
+                  }}
+                  onTap={(e) => {
+                    e.cancelBubble = true
+                    onDelete()
+                  }}
+                  onMouseEnter={(e) => {
+                    const stage = e.target.getStage()
+                    if (stage) {
+                      stage.container().style.cursor = 'pointer'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    const stage = e.target.getStage()
+                    if (stage) {
+                      stage.container().style.cursor = 'default'
+                    }
+                  }}
+                >
+                  {/* 红色圆形背景 */}
+                  <Circle
+                    radius={12}
+                    fill="#ef4444"
+                    stroke="#dc2626"
+                    strokeWidth={1}
+                    shadowBlur={3}
+                    shadowColor="rgba(0,0,0,0.3)"
+                    shadowOffset={{ x: 1, y: 1 }}
+                  />
+                  {/* X图标 - 使用两条交叉的线 */}
+                  <Line
+                    points={[-5, -5, 5, 5]}
+                    stroke="white"
+                    strokeWidth={2}
+                    lineCap="round"
+                  />
+                  <Line
+                    points={[-5, 5, 5, -5]}
+                    stroke="white"
+                    strokeWidth={2}
+                    lineCap="round"
+                  />
+                </Group>
+              )}
+            </>
           )}
         </>
       )}
@@ -561,6 +620,14 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
                   // 变换后保存状态
                   setTimeout(() => saveCanvasState(), 100)
                 }}
+                onDelete={
+                  !image.id.startsWith('history-') ? () => {
+                    setImages(images.filter(img => img.id !== image.id))
+                    setSelectedId(null)
+                    // 删除后保存状态
+                    setTimeout(() => saveCanvasState(), 100)
+                  } : undefined
+                }
               />
             ))}
           </Layer>
