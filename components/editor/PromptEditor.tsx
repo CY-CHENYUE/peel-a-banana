@@ -5,7 +5,6 @@ import { Sparkles, Wand2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useAppStore from '@/stores/useAppStore'
 import { getReferenceImageDataURL } from '@/lib/referenceImages'
-import { AspectRatio } from '@/types'
 
 export default function PromptEditor() {
   const {
@@ -57,7 +56,7 @@ export default function PromptEditor() {
         // 图2：使用预生成的白底参考图
         const aspectRatioReference = aspectRatio === 'custom' 
           ? await getReferenceImageDataURL('1:1') // custom时使用1:1作为默认
-          : await getReferenceImageDataURL(aspectRatio as any)
+          : await getReferenceImageDataURL(aspectRatio as ('1:1' | '3:4' | '4:3' | '9:16' | '16:9'))
         referenceImages.push({
           data: aspectRatioReference,
           type: 'aspect_ratio',
@@ -70,7 +69,7 @@ export default function PromptEditor() {
         // 没有画布内容时，使用预生成的白底参考图
         const aspectRatioReference = aspectRatio === 'custom'
           ? await getReferenceImageDataURL('1:1') // custom时使用1:1作为默认
-          : await getReferenceImageDataURL(aspectRatio as any)
+          : await getReferenceImageDataURL(aspectRatio as ('1:1' | '3:4' | '4:3' | '9:16' | '16:9'))
         referenceImages.push({
           data: aspectRatioReference,
           type: 'aspect_ratio',
