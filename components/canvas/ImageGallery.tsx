@@ -89,11 +89,31 @@ export default function ImageGallery() {
   }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
+    // Process files one by one to avoid race conditions
+    const processedFiles = new Set<string>()
+    
     acceptedFiles.forEach(file => {
+      // Create a unique identifier for this file
+      const fileId = `${file.name}_${file.size}_${file.lastModified}`
+      
+      // Skip if already processing this file
+      if (processedFiles.has(fileId)) {
+        console.log('Skipping duplicate file in batch:', file.name)
+        return
+      }
+      
+      processedFiles.add(fileId)
+      
       const reader = new FileReader()
       reader.onload = async (e) => {
         const imageData = e.target?.result as string
-        addUploadedImage(file, imageData)
+        // Add a small delay between files to ensure proper processing
+        setTimeout(() => {
+          addUploadedImage(file, imageData)
+        }, processedFiles.size * 10) // Stagger uploads by 10ms each
+      }
+      reader.onerror = () => {
+        console.error('Failed to read file:', file.name)
       }
       reader.readAsDataURL(file)
     })

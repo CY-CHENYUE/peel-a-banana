@@ -125,11 +125,40 @@ const useAppStore = create<AppStore>((set, get) => ({
   
   // Image actions
   addUploadedImage: (file, preview) => {
-    const id = Date.now().toString()
-    set((state) => ({
-      uploadedImages: [...state.uploadedImages, { id, file, preview }],
-      selectedImageId: id
-    }))
+    // Use crypto.randomUUID() for unique IDs, fallback to timestamp + random
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID 
+      ? crypto.randomUUID()
+      : `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${file.name}`
+    
+    set((state) => {
+      // Check for duplicate files by multiple criteria
+      const isDuplicate = state.uploadedImages.some(
+        img => (
+          // Check by file properties
+          (img.file.name === file.name && img.file.size === file.size) ||
+          // Check by preview URL (in case same file is added twice quickly)
+          img.preview === preview ||
+          // Check by ID (should never happen, but just in case)
+          img.id === id
+        )
+      )
+      
+      if (isDuplicate) {
+        console.log('Duplicate file skipped:', file.name)
+        return state // Don't add duplicate
+      }
+      
+      // Also ensure we don't exceed the limit
+      if (state.uploadedImages.length >= 5) {
+        console.log('Maximum number of images reached')
+        return state
+      }
+      
+      return {
+        uploadedImages: [...state.uploadedImages, { id, file, preview }],
+        selectedImageId: id
+      }
+    })
   },
   removeUploadedImage: (id) => set((state) => {
     const newImages = state.uploadedImages.filter(img => img.id !== id)

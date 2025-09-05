@@ -162,10 +162,23 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
   useEffect(() => {
     uploadedImages.forEach((uploadedImg, index) => {
       if (!processedImageIds.has(uploadedImg.id)) {
+        // 再次检查画布中是否已存在该图片（防止重复）
+        const existingImage = images.find(img => img.id === uploadedImg.id)
+        if (existingImage) {
+          // 如果已存在，只标记为已处理，不重复添加
+          setProcessedImageIds(prev => new Set(prev).add(uploadedImg.id))
+          return
+        }
+        
         // 创建 Image 对象以获取原始尺寸
         const img = new Image()
         img.src = uploadedImg.preview
         img.onload = () => {
+          // 再次检查（因为是异步操作）
+          if (processedImageIds.has(uploadedImg.id)) {
+            return
+          }
+          
           // 计算等比例缩放的尺寸
           const maxSize = 200
           const ratio = img.width / img.height
@@ -194,8 +207,17 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
             width: width,
             height: height,
           }
-          setImages(prev => [...prev, newImage])
+          
+          // 使用函数式更新，确保不会重复添加
+          setImages(prev => {
+            // 最后一次检查是否已存在
+            if (prev.some(img => img.id === uploadedImg.id)) {
+              return prev
+            }
+            return [...prev, newImage]
+          })
           setProcessedImageIds(prev => new Set(prev).add(uploadedImg.id))
+          
           // 等待渲染完成后保存状态
           setTimeout(() => {
             if (stageRef.current) {
@@ -205,9 +227,15 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
             }
           }, 100)
         }
+        
+        img.onerror = () => {
+          console.error('Failed to load image:', uploadedImg.id)
+          // 即使加载失败也要标记为已处理，避免重复尝试
+          setProcessedImageIds(prev => new Set(prev).add(uploadedImg.id))
+        }
       }
     })
-  }, [uploadedImages, canvasWidth, canvasHeight, processedImageIds, setCanvasDataURL, addToCanvasHistory])
+  }, [uploadedImages, canvasWidth, canvasHeight, processedImageIds, setCanvasDataURL, addToCanvasHistory, images])
 
   // 处理鼠标/触摸事件（绘画）
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
