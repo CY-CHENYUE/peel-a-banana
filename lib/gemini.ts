@@ -72,7 +72,7 @@ export async function analyzeImageAndGenerateTags(imageBase64: string): Promise<
     const tags = data.tags || data.suggestions || []
 
     // Add IDs and ensure all fields are present
-    return tags.map((tag: any, index: number) => ({
+    return tags.map((tag: {category?: string, value?: string}, index: number) => ({
       id: index + 1,
       category: tag.category || 'fun',
       label: tag.label || '创意效果',

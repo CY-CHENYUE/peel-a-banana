@@ -11,11 +11,28 @@ interface KonvaCanvasEditorProps {
   className?: string
 }
 
+interface URLImageProps {
+  image: {
+    id: string
+    src: string
+    x: number
+    y: number
+    width?: number
+    height?: number
+    scaleX?: number
+    scaleY?: number
+    rotation?: number
+  }
+  isSelected: boolean
+  onSelect: () => void
+  onChange: (newAttrs: URLImageProps['image']) => void
+}
+
 // 单独的图片组件，用于处理图片加载和变换
-const URLImage = ({ image, isSelected, onSelect, onChange }: any) => {
+const URLImage = ({ image, isSelected, onSelect, onChange }: URLImageProps) => {
   const [img, setImg] = useState<HTMLImageElement | null>(null)
-  const imageRef = useRef<any>()
-  const trRef = useRef<any>()
+  const imageRef = useRef<Konva.Image>(null)
+  const trRef = useRef<Konva.Transformer>(null)
 
   useEffect(() => {
     const loadImage = () => {
@@ -116,8 +133,8 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
 
   const stageRef = useRef<Konva.Stage>(null)
   const isDrawing = useRef(false)
-  const [lines, setLines] = useState<any[]>([])
-  const [images, setImages] = useState<any[]>([])
+  const [lines, setLines] = useState<Array<{tool: string, points: number[]}>>([])
+  const [images, setImages] = useState<URLImageProps['image'][]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [processedImageIds, setProcessedImageIds] = useState<Set<string>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)
@@ -181,7 +198,7 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
   }, [uploadedImages, canvasWidth, canvasHeight, processedImageIds, setCanvasDataURL, addToCanvasHistory])
 
   // 处理鼠标/触摸事件（绘画）
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (currentTool !== 'brush' && currentTool !== 'eraser') return
     
     isDrawing.current = true
@@ -194,7 +211,7 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
     }])
   }
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (!isDrawing.current) return
     if (currentTool !== 'brush' && currentTool !== 'eraser') return
 
@@ -222,7 +239,7 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
   const saveCanvasState = useCallback(() => {
     if (stageRef.current) {
       // 保存前先取消选择，避免选择框被保存
-      const previousSelectedId = selectedId
+      // const previousSelectedId = selectedId  // 暂时不恢复选择
       setSelectedId(null)
       
       // 等待一帧让UI更新
@@ -322,17 +339,21 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
   // 暴露方法给父组件（用于工具栏）
   useEffect(() => {
     // 将清空和导出功能绑定到window对象（临时方案）
-    ;(window as any).canvasClear = clearCanvas
-    ;(window as any).canvasExport = exportCanvas
+    const win = window as unknown as {
+      canvasClear?: () => void
+      canvasExport?: () => void
+    }
+    win.canvasClear = clearCanvas
+    win.canvasExport = exportCanvas
     
     return () => {
-      delete (window as any).canvasClear
-      delete (window as any).canvasExport
+      delete win.canvasClear
+      delete win.canvasExport
     }
   }, [clearCanvas, exportCanvas])
 
   // 点击舞台空白处取消选择
-  const checkDeselect = (e: any) => {
+  const checkDeselect = (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     // 点击空白处或背景层
     const clickedOnEmpty = e.target === e.target.getStage() || e.target.className === 'Rect'
     if (clickedOnEmpty) {
@@ -384,7 +405,7 @@ export default function KonvaCanvasEditor({ className }: KonvaCanvasEditorProps)
                     setSelectedId(image.id)
                   }
                 }}
-                onChange={(newAttrs: any) => {
+                onChange={(newAttrs: URLImageProps['image']) => {
                   const imgs = images.slice()
                   const index = imgs.findIndex(img => img.id === image.id)
                   imgs[index] = newAttrs

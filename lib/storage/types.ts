@@ -1,7 +1,7 @@
 // 图片记录的数据结构
 export interface ImageRecord {
   id: string
-  url: string
+  url: string           // 原始图片URL
   prompt: string
   timestamp: number
   userId?: string      // 预留：用户ID

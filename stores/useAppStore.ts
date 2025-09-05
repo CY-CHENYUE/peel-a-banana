@@ -182,25 +182,49 @@ const useAppStore = create<AppStore>((set, get) => ({
   setShowCelebration: (show) => set({ showCelebration: show }),
   
   addToGeneratedHistory: async (url, prompt) => {
-    const record = storage.createImageRecord(url, prompt)
+    // 创建 ImageRecord 对象
+    const record = {
+      id: Date.now().toString(),
+      url: url,
+      prompt: prompt,
+      timestamp: Date.now()
+    }
     
-    // 保存到存储服务
-    await storage.saveImage(record)
+    // 先更新 store 中的数据
+    const newHistory = [record, ...get().generatedHistory].slice(0, 50)
+    set({ generatedHistory: newHistory })
     
-    // 更新 store
-    set((state) => ({
-      generatedHistory: [record, ...state.generatedHistory].slice(0, 50) // Keep last 50 images
-    }))
+    // 然后保存完整的历史记录到存储（避免重复）
+    try {
+      // @ts-ignore - 使用新的 saveAllImages 方法
+      if (storage.saveAllImages) {
+        await storage.saveAllImages(newHistory)
+      } else {
+        // 兼容旧版本
+        await storage.saveImage(record)
+      }
+    } catch (error) {
+      console.error('Failed to persist image history:', error)
+    }
   },
   
   removeFromHistory: async (id) => {
-    // 从存储服务删除
-    await storage.deleteImage(id)
+    // 先更新 store 中的数据
+    const newHistory = get().generatedHistory.filter(img => img.id !== id)
+    set({ generatedHistory: newHistory })
     
-    // 更新 store
-    set((state) => ({
-      generatedHistory: state.generatedHistory.filter(img => img.id !== id)
-    }))
+    // 然后保存完整的历史记录到存储（替换整个列表）
+    try {
+      // @ts-ignore - 使用新的 saveAllImages 方法
+      if (storage.saveAllImages) {
+        await storage.saveAllImages(newHistory)
+      } else {
+        // 兼容旧版本
+        await storage.deleteImage(id)
+      }
+    } catch (error) {
+      console.error('Failed to persist image deletion:', error)
+    }
   },
   
   clearGeneratedHistory: async () => {
@@ -276,7 +300,7 @@ const useAppStore = create<AppStore>((set, get) => ({
     return {
       canvas: {
         ...state.canvas,
-        history: newHistory.slice(-50), // Keep last 50 states
+        history: newHistory.slice(-30), // 保留30个历史状态
         historyIndex: newHistory.length - 1
       }
     }

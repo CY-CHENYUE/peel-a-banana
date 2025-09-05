@@ -24,15 +24,22 @@ function cleanMarkdown(text: string): string {
     .trim()
 }
 
+interface ParsedTag {
+  category?: string
+  label?: string
+  emoji?: string
+  value?: string
+}
+
 // Parse structured text response into tags
-function parseStructuredText(text: string): any[] {
-  const tags = []
+function parseStructuredText(text: string): ParsedTag[] {
+  const tags: ParsedTag[] = []
   const tagRegex = /标签#\d+:[\s\S]*?(?=标签#\d+:|$)/g
   const matches = text.match(tagRegex) || []
   
   for (const match of matches) {
     try {
-      const tag: any = {}
+      const tag: ParsedTag = {}
       
       // Extract fields using regex
       const categoryMatch = match.match(/类别[:：]\s*(\w+)/i)
@@ -196,7 +203,7 @@ ${imageArray.length > 1 ? `特别注意：你收到了${imageArray.length}张图
     }
 
     // Add IDs and ensure all required fields
-    return tags.map((tag: any, index: number) => ({
+    return tags.map((tag: ParsedTag, index: number) => ({
       id: index + 1,
       category: tag.category || 'fun',
       label: tag.label || '创意效果',

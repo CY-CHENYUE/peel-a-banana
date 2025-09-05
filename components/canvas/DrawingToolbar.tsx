@@ -139,8 +139,8 @@ export default function DrawingToolbar() {
       label: '清空',
       onClick: () => {
         // Try Konva's clear method first, fallback to native canvas
-        if ((window as any).canvasClear) {
-          (window as any).canvasClear()
+        if ((window as unknown as {canvasClear?: () => void}).canvasClear) {
+          (window as unknown as {canvasClear: () => void}).canvasClear()
         } else {
           const canvas = document.querySelector('canvas') as HTMLCanvasElement
           const context = canvas?.getContext('2d')
@@ -163,8 +163,8 @@ export default function DrawingToolbar() {
       label: '导出',
       onClick: () => {
         // Try Konva's export method first, fallback to native canvas
-        if ((window as any).canvasExport) {
-          (window as any).canvasExport()
+        if ((window as unknown as {canvasExport?: () => void}).canvasExport) {
+          (window as unknown as {canvasExport: () => void}).canvasExport()
         } else {
           const canvas = document.querySelector('canvas') as HTMLCanvasElement
           if (canvas) {

@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
     // 限制日志输出长度，避免太长的base64数据
     const logData = JSON.parse(JSON.stringify(data))
     if (logData.choices?.[0]?.message?.images) {
-      logData.choices[0].message.images = logData.choices[0].message.images.map((img: any) => {
+      logData.choices[0].message.images = logData.choices[0].message.images.map((img: {image_url?: {url?: string}}) => {
         if (img.image_url?.url?.startsWith('data:')) {
           return { ...img, image_url: { url: `data:... (${img.image_url.url.length} chars)` }}
         }
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
       })
     }
     if (Array.isArray(logData.choices?.[0]?.message?.content)) {
-      logData.choices[0].message.content = logData.choices[0].message.content.map((part: any) => {
+      logData.choices[0].message.content = logData.choices[0].message.content.map((part: {type?: string, image_url?: {url?: string}}) => {
         if (part.type === 'image_url' && part.image_url?.url?.startsWith('data:')) {
           return { ...part, image_url: { url: `data:... (${part.image_url.url.length} chars)` }}
         }
